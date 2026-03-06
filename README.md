@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lead Prospector — Lweb
 
-## Getting Started
+Herramienta interna de prospecting local para Lweb. Busca empresas en la region (Buchs SG, Werdenberg, Rheintal, Liechtenstein, St. Gallen), analiza sus webs y genera emails personalizados con GPT-4.
 
-First, run the development server:
+## Como funciona
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. Escribes una busqueda: `restaurant Buchs SG`, `coiffeur Sevelen`, `zahnarzt Werdenberg`...
+2. El bot busca empresas en **local.ch** y **DuckDuckGo**
+3. Visita cada web + pagina de contacto/impressum
+4. Analiza: SSL, mobile, velocidad, SEO, CTA, cookies, favicon, imagenes
+5. Genera un email personalizado en aleman con **GPT-4** basado en los problemas reales
+6. Todo se guarda en `data/leads.json` (sin base de datos)
+
+## Que analiza el bot
+
+- SSL (https)
+- Mobile-friendly (viewport)
+- Velocidad de carga
+- Titulo SEO y meta description
+- Llamada a la accion (CTA) visible
+- Redes sociales vinculadas
+- Aviso de cookies (DSG/GDPR)
+- Favicon
+- Imagenes sin alt text
+- CMS detectado (WordPress, Joomla, etc.)
+- Email y telefono de contacto
+
+## Stack
+
+- **Next.js 14** — framework
+- **TypeScript** — tipado
+- **Tailwind CSS** — estilos
+- **OpenAI GPT-4** — generacion de emails
+- **Cheerio + Axios** — scraping de webs
+- **JSON local** — almacenamiento en `data/leads.json`
+
+## Estructura
+
+```
+lead-prospector/
+├── .env.local              # OPENAI_API_KEY=sk-...
+├── data/
+│   └── leads.json          # todos los leads guardados (local)
+├── src/
+│   ├── lib/
+│   │   ├── types.ts        # tipos de Lead
+│   │   ├── leads-store.ts  # CRUD en JSON local
+│   │   ├── scraper.ts      # analizar webs (SSL, mobile, speed, SEO...)
+│   │   ├── search.ts       # buscar empresas en local.ch y DuckDuckGo
+│   │   └── ai.ts           # generar emails con GPT-4
+│   └── app/
+│       ├── page.tsx         # panel principal
+│       └── api/
+│           ├── search/      # buscar + analizar + generar emails
+│           ├── scrape/      # analizar una web individual
+│           ├── leads/       # CRUD de leads + exportar CSV
+│           └── generate-email/ # regenerar email con GPT-4
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# 1. Instalar dependencias
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# 2. Configurar API key de OpenAI
+# Crear archivo .env.local con:
+OPENAI_API_KEY=sk-...
 
-## Learn More
+# 3. Arrancar
+npm run dev
 
-To learn more about Next.js, take a look at the following resources:
+# 4. Abrir
+# http://localhost:3003
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Funcionalidades del panel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Buscar empresas** — escribe sector + ciudad, el bot hace todo
+- **6 resultados max** por busqueda, bien analizados
+- **No repite** leads que ya tienes guardados
+- **Score de oportunidad** — rojo = web mala = mas oportunidad
+- **Email personalizado** generado automaticamente en aleman
+- **Boton "Abrir en Mail"** — abre tu app de correo con el email listo
+- **Regenerar Email** — genera un nuevo email para un lead
+- **Marcar como Contactado / Descartar**
+- **Exportar CSV** — descarga todos los leads
+- **Filtros** — Todos, Nuevos, Contactados, Descartados
 
-## Deploy on Vercel
+## Emails generados
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Los emails se generan como Roberto Salvador, freelancer de Sevelen:
+- Tono cercano, como un vecino ("Grüezi mitenand", "Ich bin der Roberto aus Sevelen")
+- Sin jerga tecnica (nada de Next.js, React, WordPress)
+- Habla del problema del cliente (Gaeste, Handy, Google)
+- CTA simple: 5-10 minutos de telefono
+- Firma: Roberto + Lweb + telefono + web
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Notas
+
+- Solo para uso local/interno, no se publica en ninguna URL
+- Los datos se guardan en `data/leads.json`
+- Respetar las buenas practicas de contacto B2B: mensajes personalizados, no spam masivo
+# lead
