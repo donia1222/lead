@@ -1,143 +1,6 @@
 [
   {
-    "id": "1772801311920xi5pg",
-    "name": "Akropolis & Dallas-Grill",
-    "sector": "Restaurant",
-    "city": "Buchs SG",
-    "url": "https://www.akropolis-buchs.ch",
-    "email": "info@griechenland.li",
-    "phone": "+41817564000",
-    "contactPage": "",
-    "hasSSL": true,
-    "hasViewport": false,
-    "loadTime": 0,
-    "score": 27,
-    "problems": [
-      "Web no accesible"
-    ],
-    "status": "new",
-    "emailDraft": "Betreff: Ein kleiner Hinweis zu Ihrer Webseite von einem Nachbarn\n\nGrüezi im Akropolis & Dallas-Grill,\n\nals freiberuflicher Webentwickler aus Sevelen schaue ich mir regelmäßig die Webseiten von Unternehmen in unserer Region an. Bei einem Besuch Ihrer Webseite ist mir aufgefallen, dass sie nicht optimal zugänglich ist.\n\nIch hatte vor Kurzem das Vergnügen, für ein Restaurant in unserer Region eine moderne, schnelle und vor allem zugängliche Website zu entwickeln. Wir haben darauf geachtet, dass die Seite von allen Gästen problemlos genutzt werden kann - ganz gleich, ob sie am Computer sitzen, ein Smartphone in der Hand halten oder besondere Bedürfnisse haben.\n\nDarf ich Ihnen in einem kurzen Telefonat (10 Minuten) zeigen, was ich konkret verbessern würde?\n\nIch schaue mir regelmässig Webseiten von Betrieben in unserer Region an und melde mich, wenn ich Verbesserungspotenzial sehe. Als freiberuflicher Entwickler vor Ort arbeite ich ohne Agenturaufschlag — individuell und deutlich günstiger.\n\nFreundliche Grüsse\nRoberto Salvador\nModerne Websites und Apps für lokale Unternehmen — schnell, professionell und zu fairen Preisen.\nIhr persönlicher Ansprechpartner vor Ort in Buchs SG, Werdenberg und Liechtenstein.\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\n9475 Sevelen, Schweiz",
-    "createdAt": "2026-03-06T12:48:31.920Z"
-  },
-  {
-    "id": "17728013212699kczv",
-    "name": "Cafe Konditorei Wanger",
-    "sector": "Restaurant",
-    "city": "Buchs SG",
-    "url": "http://www.wangerag.com",
-    "email": "info@wangerag.com",
-    "phone": "+41817561143",
-    "contactPage": "http://www.wangerag.com/DE/Kontakt/tblid/185/Default.asp",
-    "hasSSL": false,
-    "hasViewport": true,
-    "loadTime": 463,
-    "score": 69,
-    "problems": [
-      "Sin SSL (no https)",
-      "Sin DOCTYPE moderno",
-      "Sin meta description SEO",
-      "Sin llamada a la accion clara (CTA)",
-      "Sin CMS moderno detectado (web posiblemente hecha a mano)",
-      "Sin favicon",
-      "Imagenes sin texto alternativo (malo para SEO y accesibilidad)"
-    ],
-    "status": "new",
-    "emailDraft": "Betreff: Hinweis zur Sicherheit Ihrer Website\n\nGrüezi\n\nIch bin Webentwickler aus Sevelen und arbeite mit Gastronomiebetrieben im Rheintal und in Buchs SG.\n\nAuf Ihrer Website ist mir aufgefallen, dass sie nicht verschlüsselt ist. Manche Browser warnen Ihre Besucher deswegen. Zudem wirkt die Seite etwas in die Jahre gekommen.\n\nDas kann Gäste abschrecken und Reservierungen kosten.\n\nFalls Sie mögen, zeige ich Ihnen gerne, wie Ihre Website modern und sicher aussehen könnte.\n\nEin kurzes Telefonat von 5–10 Minuten reicht völlig.\n\nFreundliche Grüsse\nRoberto Salvador\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen",
-    "createdAt": "2026-03-06T12:48:41.269Z"
-  },
-  {
-    "id": "1772801333494ncqua",
-    "name": "Cafésapore",
-    "sector": "Restaurant",
-    "city": "Buchs SG",
-    "url": "https://www.cafesapore.ch",
-    "email": "info@cafesapore.ch",
-    "phone": "+41817567470",
-    "contactPage": "https://www.cafesapore.ch/kontakt/",
-    "hasSSL": true,
-    "hasViewport": true,
-    "loadTime": 3451,
-    "score": 31,
-    "problems": [
-      "Web lenta (3451ms)",
-      "Demasiados estilos inline (codigo desordenado)",
-      "Imagenes sin texto alternativo (malo para SEO y accesibilidad)"
-    ],
-    "status": "new",
-    "emailDraft": "Betreff: Ihre Website und die Wartezeit\n\nGrüezi\n\nAls Webentwickler aus Sevelen arbeite ich mit verschiedenen Gastronomiebetrieben im Rheintal und Buchs SG.\n\nMir ist aufgefallen, dass Ihre Website recht langsam lädt.\n\nDas kann dazu führen, dass potenzielle Gäste abspringen und Ihre Seite bei Google-Suchanfragen nach Restaurants in der Nähe schwerer gefunden wird.\n\nIch kann Ihnen gerne aufzeigen, wie man das verbessern kann. Ein kurzes Telefonat von 5–10 Minuten würde genügen.\n\nFreundliche Grüsse\nRoberto Salvador\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen",
-    "createdAt": "2026-03-06T12:48:53.494Z"
-  },
-  {
-    "id": "1772801339164xporh",
-    "name": "Falken Biergarten - Bar - Pub",
-    "sector": "Restaurant",
-    "city": "Buchs SG",
-    "url": "http://www.falken-bar.ch",
-    "email": "falken-buchs@hotmail.com",
-    "phone": "081 740 01 41",
-    "contactPage": "",
-    "hasSSL": false,
-    "hasViewport": true,
-    "loadTime": 228,
-    "score": 48,
-    "problems": [
-      "Sin SSL (no https)",
-      "Sin meta description SEO",
-      "Sin llamada a la accion clara (CTA)",
-      "Demasiados estilos inline (codigo desordenado)"
-    ],
-    "status": "new",
-    "emailDraft": "Betreff: Hinweis zu Ihrer Website-Sicherheit\n\nGrüezi\n\nIch bin Webentwickler aus Sevelen und arbeite mit lokalen Unternehmen im Rheintal und in Buchs SG.\n\nMir ist aufgefallen, dass Ihre Website keine sichere Verbindung anbietet. Das kann dazu führen, dass Besucher gewarnt werden und Ihre Seite von Google schwerer gefunden wird, wenn Leute nach Restaurants in der Umgebung suchen.\n\nGerne zeige ich Ihnen kurz, wie Ihre Website sicherer und für Suchmaschinen besser auffindbar gemacht werden kann.\n\nEin kurzes Telefonat von 5–10 Minuten reicht voellig.\n\nFreundliche Grüsse\nRoberto Salvador\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
-    "createdAt": "2026-03-06T12:48:59.164Z"
-  },
-  {
-    "id": "17728013500352dl9x",
-    "name": "La Vida Cafe & Bar",
-    "sector": "Restaurant",
-    "city": "Buchs SG",
-    "url": "https://www.lavidabuchs.ch",
-    "email": "benutzer@domain.com",
-    "phone": "0983688756",
-    "contactPage": "https://www.lavidabuchs.ch/",
-    "hasSSL": true,
-    "hasViewport": true,
-    "loadTime": 156,
-    "score": 35,
-    "problems": [
-      "Titulo SEO muy corto",
-      "Sin meta description SEO",
-      "Sin llamada a la accion clara (CTA)",
-      "Sin CMS moderno detectado (web posiblemente hecha a mano)",
-      "Demasiados estilos inline (codigo desordenado)"
-    ],
-    "status": "new",
-    "emailDraft": "Betreff: Optimierung Ihrer Webseite - Kostenlose Überprüfung durch Lweb\n\nSehr geehrte Damen und Herren von La Vida Café & Bar in Buchs SG,\n\nwir haben bemerkt, dass Ihre aktuelle Webseite Optimierungspotential aufweist, insbesondere im Hinblick auf SEO-Elemente wie den Titel und die Meta-Beschreibung. Zudem könnte eine klarere Handlungsaufforderung (CTA) die Benutzerfreundlichkeit Ihrer Seite verbessern.\n\nAls lokale Webentwicklungsagentur bietet Lweb eine kostenlose Überprüfung und Beratung an, um Ihnen zu helfen, das volle Potential Ihrer Webseite auszuschöpfen. \n\nWir freuen uns auf Ihre Kontaktaufnahme.\n\nMit freundlichen Grüßen,\n\nIhr Lweb-Team\n",
-    "createdAt": "2026-03-06T12:49:10.035Z"
-  },
-  {
-    "id": "1772801356979g2k00",
-    "name": "McDonald's Restaurant",
-    "sector": "Restaurant",
-    "city": "Buchs SG",
-    "url": "https://www.mcdonalds.com/ch/de-ch/location/st-gallen-st-gall/buchs/buchs/bahnhofstrasse-21/780092.html",
-    "email": "info@ch.mcd.com",
-    "phone": "0843763351",
-    "contactPage": "https://www.mcdonalds.com/ch/de-ch/rechtliche-informationen/impressum.html",
-    "hasSSL": true,
-    "hasViewport": true,
-    "loadTime": 112,
-    "score": 21,
-    "problems": [
-      "Sin DOCTYPE moderno",
-      "Sin CMS moderno detectado (web posiblemente hecha a mano)",
-      "Imagenes sin texto alternativo (malo para SEO y accesibilidad)"
-    ],
-    "status": "new",
-    "emailDraft": "Betreff: Verbesserung Ihrer Webpräsenz – Kostenlose Überprüfung durch Lweb\n\nSehr geehrte Damen und Herren bei McDonald's Restaurant in Buchs SG,\n\nwir bei Lweb haben festgestellt, dass Ihre aktuelle Webseite einige Verbesserungsmöglichkeiten bietet. Insbesondere könnte die Implementierung eines modernen DOCTYPE und CMS sowie die Hinzufügung von alternativen Texten zu Ihren Bildern die SEO-Performance und die Zugänglichkeit Ihrer Seite erheblich verbessern.\n\nWir würden uns freuen, Ihnen eine kostenlose Überprüfung Ihrer Webseite anzubieten, um diese Punkte näher zu erörtern und Lösungen vorzuschlagen.\n\nMit freundlichen Grüßen,\n\nIhr Lweb-Team\n",
-    "createdAt": "2026-03-06T12:49:16.979Z"
-  },
-  {
-    "id": "1772812325208ffyff",
+    "id": "1772835573095nu9wf",
     "name": "Hair & Beauty by Diana",
     "sector": "coiffeur",
     "city": "Sevelen",
@@ -147,7 +10,7 @@
     "contactPage": "",
     "hasSSL": true,
     "hasViewport": true,
-    "loadTime": 276,
+    "loadTime": 705,
     "score": 28,
     "problems": [
       "Sin llamada a la accion clara (CTA)",
@@ -156,11 +19,11 @@
       "Sin email de contacto visible"
     ],
     "status": "new",
-    "emailDraft": "Betreff: Optimierungsmöglichkeiten für Ihre Website\n\nGrüezi\n\nAls Webentwickler aus Sevelen ist mir aufgefallen, dass Besucher Ihrer Website nicht sofort sehen, wie sie Sie kontaktieren können.\n\nDies könnte potentielle Kunden abschrecken und Ihre Platzierung bei Google beeinträchtigen.\n\nGerne zeige ich Ihnen, wie Sie dies ändern und mehr Kunden gewinnen können. Ein kurzes Telefonat genügt.\n\nFreundliche Grüsse\nRoberto Salvador\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
-    "createdAt": "2026-03-06T15:52:05.208Z"
+    "emailDraft": "Betreff: Ein Tipp für Ihre Website\n\nGrüezi Diana,\n\nRoberto hier, aus Sevelen - ich bastle Websites. Als ich neulich Ihre Seite besucht habe, ist mir aufgefallen, dass es für Besucher nicht ganz einfach ist, Sie zu kontaktieren. Und Ihre Seite könnte bei Google besser gefunden werden.\n\nDas ist schade, denn so gehen vielleicht Kundinnen und Kunden verloren. Wenn Sie möchten, können wir das gerne mal am Telefon besprechen - unverbindlich natürlich.\n\nFreu mich auf Ihre Antwort!\n\nLiebe Grüsse\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
+    "createdAt": "2026-03-06T22:19:33.095Z"
   },
   {
-    "id": "1772812332166zon19",
+    "id": "1772835580939rcorb",
     "name": "Natur Coiffure Der Bader",
     "sector": "coiffeur",
     "city": "Sevelen",
@@ -170,7 +33,7 @@
     "contactPage": "https://www.derbader.ch/?page=2202&lan=de",
     "hasSSL": true,
     "hasViewport": true,
-    "loadTime": 237,
+    "loadTime": 701,
     "score": 35,
     "problems": [
       "Sin DOCTYPE moderno",
@@ -180,11 +43,11 @@
       "Imagenes sin texto alternativo (malo para SEO y accesibilidad)"
     ],
     "status": "new",
-    "emailDraft": "Betreff: Ihre Website könnte moderner sein\n\nGrüezi\n\nAls Webentwickler aus Sevelen, habe ich Ihre Website besucht und festgestellt, dass sie etwas veraltet wirkt. \n\nEin frisches, modernes Design könnte potenzielle Kunden stärker ansprechen und die Kontaktaufnahme erleichtern.\n\nEin kurzes Gespräch könnte zeigen, wie wir Ihre Website attraktiver und nutzerfreundlicher gestalten können.\n\nFreundliche Grüsse\nRoberto Salvador\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen",
-    "createdAt": "2026-03-06T15:52:12.166Z"
+    "emailDraft": "Betreff: Ein kleiner Tipp für Ihre Website\n\nGrüezi mitenand\n\nIch bin Roberto, der Webentwickler aus Sevelen. Ihr Coiffeur Salon ist top, aber Ihre Website könnte etwas frischer wirken. Etwas Modernes könnte mehr Kunden anlocken. Und man findet nicht sofort, wie man Sie erreichen kann. \n\nDas ist schade, weil so potenzielle Kunden vielleicht abspringen. Ich könnte mir das mal kurz anschauen, wenn Sie möchten — ganz unverbindlich und ohne Stress.\n\nMelden Sie sich, wenn Sie Lust haben!\n\nLiebe Grüsse\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
+    "createdAt": "2026-03-06T22:19:40.939Z"
   },
   {
-    "id": "1772812339610nruiy",
+    "id": "1772835588858f92kt",
     "name": "Preite Doris",
     "sector": "coiffeur",
     "city": "Sevelen",
@@ -194,7 +57,7 @@
     "contactPage": "",
     "hasSSL": true,
     "hasViewport": true,
-    "loadTime": 303,
+    "loadTime": 381,
     "score": 42,
     "problems": [
       "Sin meta description SEO",
@@ -205,7 +68,321 @@
       "Sin email de contacto visible"
     ],
     "status": "new",
-    "emailDraft": "Betreff: Wie Ihre Website Sie besser unterstützen kann\n\nGrüezi\n\nIch bin Webentwickler aus Sevelen und arbeite mit mehreren Unternehmen im Rheintal und in Buchs SG.\n\nMir ist aufgefallen, dass Ihre Webseite auf Google nicht optimal gefunden wird und die Kontaktinformationen nicht sofort sichtbar sind.\n\nDiese Punkte könnten potenzielle Kunden abschrecken und damit Ihren Umsatz beeinträchtigen.\n\nGerne zeige ich Ihnen, wie Ihre Webseite leichter zu finden und benutzerfreundlicher gestaltet werden könnte.\n\nEin kurzes Telefonat von 5–10 Minuten reicht voellig.\n\nFreundliche Grüsse\nRoberto Salvador\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen",
-    "createdAt": "2026-03-06T15:52:19.610Z"
+    "emailDraft": "Betreff: Ein bisschen Hilfe für Ihre Website\n\nGrüezi Doris\n\nRoberto hier, aus Sevelen. Ich gestalte Websites und habe mir Ihre kürzlich angeschaut. Mir ist aufgefallen, dass sie auf Google etwas schwer zu finden ist und die Kontaktdaten sind nicht sofort sichtbar. Das ist schade, weil eventuelle neue Kunden Sie vielleicht nicht so einfach erreichen können. \n\nWenn Sie mögen, können wir das zusammen in einem kurzen Telefonat besprechen. Ganz unverbindlich natürlich.\n\nIch freue mich, von Ihnen zu hören!\n\nLiebe Grüsse\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
+    "createdAt": "2026-03-06T22:19:48.858Z"
+  },
+  {
+    "id": "17728357030660jq8u",
+    "name": "Zahnarztpraxis Lindenhof AG",
+    "sector": "zahnarzt",
+    "city": "Werdenberg",
+    "url": "http://www.zahnarztpraxis-lindenhof.ch",
+    "email": "kontakt@zahnarztpraxis-lindenhof.ch",
+    "phone": "+41713501133",
+    "contactPage": "http://www.zahnarztpraxis-lindenhof.ch/kontakt.php",
+    "hasSSL": false,
+    "hasViewport": true,
+    "loadTime": 774,
+    "score": 48,
+    "problems": [
+      "Sin SSL (no https)",
+      "Sin DOCTYPE moderno",
+      "Sin llamada a la accion clara (CTA)",
+      "Sin redes sociales vinculadas"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Ein kleiner Tipp für Ihre Website\n\nGrüezi mitenand\n\nRoberto hier aus Sevelen, ich helfe Betrieben in unserer Gegend mit ihren Websites. Mir ist aufgefallen, dass manche Browser vor Ihrer Seite warnen, weil sie kein HTTPS hat. Das könnte potentielle Kunden abschrecken. Zudem könnte ein frischeres Design mehr Leute ansprechen.\n\nFalls Sie möchten, könnten wir das mal kurz am Telefon besprechen — ganz unverbindlich.\n\nIch freue mich, von Ihnen zu hören!\n\nLiebe Grüsse\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen",
+    "createdAt": "2026-03-06T22:21:43.066Z"
+  },
+  {
+    "id": "1772835709583u3az9",
+    "name": "Dr. Marius Meier & Dr. Norman Meier Zahnarztpraxis AG",
+    "sector": "zahnarzt",
+    "city": "Werdenberg",
+    "url": "http://www.zahnarzt-liechtenstein.li",
+    "email": "info@zahnarztpraxis.li",
+    "phone": "+4232327555",
+    "contactPage": "",
+    "hasSSL": false,
+    "hasViewport": true,
+    "loadTime": 1094,
+    "score": 69,
+    "problems": [
+      "Sin SSL (no https)",
+      "Sin meta description SEO",
+      "Sin redes sociales vinculadas",
+      "Sin CMS moderno detectado (web posiblemente hecha a mano)",
+      "Sin favicon",
+      "Sin aviso de cookies (posible problema DSG/GDPR)",
+      "Imagenes sin texto alternativo (malo para SEO y accesibilidad)"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Ein kleines Anliegen zu Ihrer Website\n\nGrüezi mitenand,\n\nIch bin der Roberto aus Sevelen - ich helfe Betrieben in der Region bei ihrer Website.\n\nBeim Stöbern auf Ihrer Seite ist mir aufgefallen, dass einige Browser vor dem Besuch warnen könnten. Zudem könnte Ihre Seite bei Google besser zu finden sein. \n\nDas ist schade, weil potenzielle Patienten dadurch vielleicht abgeschreckt werden. Wenn Sie möchten, können wir das kurz am Telefon besprechen - ganz unverbindlich.\n\nIch freue mich, von Ihnen zu hören!\n\nLiebe Grüsse,\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen",
+    "createdAt": "2026-03-06T22:21:49.583Z"
+  },
+  {
+    "id": "1772835721294giblm",
+    "name": "Unique Dental Center",
+    "sector": "zahnarzt",
+    "city": "Werdenberg",
+    "url": "https://uniquedentalcenter.ch",
+    "email": "info@uniquedentalcenter.ch",
+    "phone": "+41817561010",
+    "contactPage": "https://uniquedentalcenter.ch/de/kontakt/",
+    "hasSSL": true,
+    "hasViewport": true,
+    "loadTime": 1763,
+    "score": 14,
+    "problems": [
+      "Demasiados estilos inline (codigo desordenado)",
+      "Imagenes sin texto alternativo (malo para SEO y accesibilidad)"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Ein Tipp für Ihre Website\n\nGrüezi mitenand\n\nIch bin's, Roberto aus Sevelen. Ich kümmere mich um Websites hier im Dorf. \n\nBeim Stöbern bin ich auf Ihre Seite gestossen und mir ist aufgefallen, dass sie bei Google nicht so gut auffindbar ist. Das ist schade, weil potentielle Kunden Sie so schwerer finden können.\n\nWenn Sie möchten, können wir das mal schnell am Telefon besprechen - ganz unverbindlich natürlich.\n\nFreue mich auf Ihre Rückmeldung!\n\nLiebe Grüsse\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
+    "createdAt": "2026-03-06T22:22:01.294Z"
+  },
+  {
+    "id": "1772835729279rey0d",
+    "name": "zahnarztzentrum.ch",
+    "sector": "zahnarzt",
+    "city": "Werdenberg",
+    "url": "https://zahnarztzentrum.ch",
+    "email": "info@zahnarztzentrum.ch",
+    "phone": "044 267 85 00",
+    "contactPage": "https://zahnarztzentrum.ch/kontakt",
+    "hasSSL": true,
+    "hasViewport": true,
+    "loadTime": 883,
+    "score": 14,
+    "problems": [
+      "Sin CMS moderno detectado (web posiblemente hecha a mano)",
+      "Imagenes sin texto alternativo (malo para SEO y accesibilidad)"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Ein paar Gedanken zu Ihrer Webseite\n\nGrüezi mitenand\n\nIch bin Roberto, der Webentwickler aus Sevelen. Beim Durchstöbern Ihrer Webseite ist mir aufgefallen, dass es für Besucher nicht sofort ersichtlich ist, wie sie Sie kontaktieren können. Auch Google tut sich etwas schwer, Ihre Seite zu finden.\n\nDas könnte dazu führen, dass potenzielle Patienten abspringen oder Sie gar nicht erst entdecken. Wenn Sie möchten, können wir das gerne mal kurz am Telefon besprechen — ganz unverbindlich.\n\nLiebe Grüsse\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen",
+    "createdAt": "2026-03-06T22:22:09.279Z"
+  },
+  {
+    "id": "1772835743064yheyr",
+    "name": "Dr. med. dent. Praxis Kälin AG",
+    "sector": "zahnarzt",
+    "city": "Werdenberg",
+    "url": "https://www.praxiskaelin.ch",
+    "email": "info@praxiskaelin.ch",
+    "phone": "081 783 20 00",
+    "contactPage": "https://www.praxiskaelin.ch/impressum",
+    "hasSSL": true,
+    "hasViewport": true,
+    "loadTime": 1749,
+    "score": 14,
+    "problems": [
+      "Sin llamada a la accion clara (CTA)",
+      "Demasiados estilos inline (codigo desordenado)"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Ein kleiner Tipp für Ihre Webseite\n\nGrüezi mitenand\n\nRoberto aus Sevelen hier, ich bastle gern an Websites rum. \n\nBeim Besuch Ihrer Seite war's ein bisschen schwierig, direkt Ihre Kontaktdaten zu finden. Schade, denn das könnte potenzielle Patienten irritieren.\n\nSoll ich Ihnen mal zeigen, wie man das ganz einfach lösen kann? Ein kurzes Telefonat und das ist geritzt.\n\nIch freue mich auf Ihre Antwort!\n\nLiebe Grüsse\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
+    "createdAt": "2026-03-06T22:22:23.064Z"
+  },
+  {
+    "id": "17728365969402e4ye",
+    "name": "Zeus Taverna Restaurant Sennwald",
+    "sector": "restaurant",
+    "city": "Sennwald",
+    "url": "https://zeus-taverna-restaurant-sennwald.digitalone.site",
+    "email": "",
+    "phone": "+41766144939",
+    "contactPage": "https://zeus-taverna-restaurant-sennwald.digitalone.site/#contact",
+    "hasSSL": true,
+    "hasViewport": true,
+    "loadTime": 422,
+    "score": 49,
+    "problems": [
+      "Sin meta description SEO",
+      "Sin llamada a la accion clara (CTA)",
+      "Sin redes sociales vinculadas",
+      "Sin CMS moderno detectado (web posiblemente hecha a mano)",
+      "Sin favicon",
+      "Sin aviso de cookies (posible problema DSG/GDPR)",
+      "Sin email de contacto visible"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Ein kleiner Tipp für Ihre Webseite\n\nGrüezi mitenand\n\nIch bin Roberto, der Webentwickler aus Sevelen. Beim Stöbern auf Ihrer Webseite ist mir aufgefallen, dass sie bei Google nicht so leicht zu finden ist, wenn man nach Restaurants sucht.\n\nDas ist wirklich schade, weil so potenzielle Gäste, die reservieren oder Sie kontaktieren möchten, Sie nicht so leicht finden können. \n\nWenn Sie Lust haben, können wir das gerne mal kurz am Telefon besprechen — ganz unverbindlich natürlich.\n\nFreue mich, von Ihnen zu hören!\n\nLiebe Grüsse,\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen",
+    "createdAt": "2026-03-06T22:36:36.940Z"
+  },
+  {
+    "id": "1772836603703rm57i",
+    "name": "TWISTY CHICKEN",
+    "sector": "restaurant",
+    "city": "Sennwald",
+    "url": "https://twisty-chicken.digitalone.site",
+    "email": "",
+    "phone": "+41783210965",
+    "contactPage": "https://twisty-chicken.digitalone.site/#contact",
+    "hasSSL": true,
+    "hasViewport": true,
+    "loadTime": 319,
+    "score": 49,
+    "problems": [
+      "Sin meta description SEO",
+      "Sin llamada a la accion clara (CTA)",
+      "Sin CMS moderno detectado (web posiblemente hecha a mano)",
+      "Sin favicon",
+      "Sin aviso de cookies (posible problema DSG/GDPR)",
+      "Imagenes sin texto alternativo (malo para SEO y accesibilidad)",
+      "Sin email de contacto visible"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Ein paar Anmerkungen zu Ihrer Webseite\n\nGrüezi mitenand\n\nIch heisse Roberto und mache Websites hier in Sevelen. Beim Stöbern auf Ihrer Webseite ist mir aufgefallen, dass es etwas schwierig sein könnte, Sie bei Google zu finden, wenn Leute nach Restaurants in der Nähe suchen. Auch das Reservieren oder Sie zu kontaktieren, könnte klarer sein.\n\nDas ist schade, denn so könnten Sie potenzielle Gäste verpassen.\n\nWenn Sie möchten, können wir das kurz am Telefon besprechen — ganz unverbindlich, 5-10 Minuten reichen.\n\nIch freue mich auf Ihre Rückmeldung!\n\nLiebe Grüsse,\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
+    "createdAt": "2026-03-06T22:36:43.703Z"
+  },
+  {
+    "id": "1772836610844l1z36",
+    "name": "Restaurant Traube Sennwald",
+    "sector": "restaurant",
+    "city": "Sennwald",
+    "url": "https://www.sennwald.ch",
+    "email": "gemeinde@sennwald.ch",
+    "phone": "0558517009",
+    "contactPage": "https://www.sennwald.ch/_rtr/impressum",
+    "hasSSL": true,
+    "hasViewport": true,
+    "loadTime": 605,
+    "score": 21,
+    "problems": [
+      "Titulo SEO muy corto",
+      "Sin redes sociales vinculadas",
+      "Sin CMS moderno detectado (web posiblemente hecha a mano)"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Ein paar Tipps zu Ihrer Website\n\nGrüezi mitenand\n\nDer Roberto aus Sevelen hier. Ich gestalte Websites für unsere Betriebe in der Gegend. Bei Ihrer Seite ist mir aufgefallen, dass sie bei Google nicht so leicht zu finden ist, wenn man nach Restaurants sucht. Und Ihre Gäste könnten schneller reservieren oder Sie kontaktieren, wenn die Infos leichter zu finden wären.\n\nDas ist wirklich schade, ich helfe Ihnen gerne dabei, das zu verbessern. Wie wär's mit einem kurzen Telefonat? \n\nIch freue mich auf Ihre Rückmeldung!\n\nLiebe Grüsse\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen",
+    "createdAt": "2026-03-06T22:36:50.844Z"
+  },
+  {
+    "id": "17728367257119hqkz",
+    "name": "Zbinden Gabriela Coiffeur a Capello",
+    "sector": "coiffeur",
+    "city": "Haag",
+    "url": "",
+    "email": "",
+    "phone": "+41326411035",
+    "contactPage": "",
+    "hasSSL": false,
+    "hasViewport": false,
+    "loadTime": 0,
+    "score": 70,
+    "problems": [
+      "Keine eigene Webseite vorhanden"
+    ],
+    "status": "new",
+    "emailDraft": "Asunto: Un pequeño consejo para su sitio web\n\nHola Sra. Zbinden,\n\nSoy Roberto, desarrollador web de Sevelen. He visitado su sitio web y creo que podría tener un aspecto más fresco.\n\nEs una lástima, porque un sitio web moderno puede ayudarle a alcanzar a más clientes y a ser mejor encontrado en Google.\n\nMe encantaría si pudiéramos hablar por teléfono para discutir esto - sin ningún compromiso, por supuesto.\n\nUn cordial saludo,\nRoberto\n\nLweb — Sitios web modernos & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen",
+    "createdAt": "2026-03-06T22:38:45.711Z"
+  },
+  {
+    "id": "17728366243439acef",
+    "name": "Restaurant Schäfli",
+    "sector": "restaurant",
+    "city": "Sennwald",
+    "url": "https://speisekarte.menu",
+    "email": "",
+    "phone": "0481006150",
+    "contactPage": "https://speisekarte.menu/contact",
+    "hasSSL": true,
+    "hasViewport": true,
+    "loadTime": 151,
+    "score": 14,
+    "problems": [
+      "Sin CMS moderno detectado (web posiblemente hecha a mano)",
+      "Sin email de contacto visible"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Kleiner Tipp zu Ihrer Website\n\nGrüezi miteinand\n\nRoberto hier, aus Sevelen. Ich erstelle Websites für unsere lokalen Betriebe.\n\nMir ist auf Ihrer Website aufgefallen, dass Gäste nicht sofort sehen, wie sie bei Ihnen reservieren oder Sie kontaktieren können. Das ist schade, weil Sie dadurch vielleicht einige Reservierungen verpassen.\n\nIch könnte das für Sie in wenigen Minuten am Telefon anschauen, ganz unverbindlich.\n\nIch freue mich auf Ihre Rückmeldung!\n\nLiebe Grüsse\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
+    "createdAt": "2026-03-06T22:37:04.343Z"
+  },
+  {
+    "id": "177283665720580vhs",
+    "name": "Dein FriseurKerasilk Keratin TreatmentHaartraum verwirklichenNageldesign",
+    "sector": "coiffeur",
+    "city": "Buchs SG",
+    "url": "http://wl23www411.webland.ch",
+    "email": "info@deinfriseur.ch",
+    "phone": "+41817402425",
+    "contactPage": "",
+    "hasSSL": false,
+    "hasViewport": false,
+    "loadTime": 0,
+    "score": 47,
+    "problems": [
+      "Web no accesible"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Ein kleiner Tipp zu Ihrer Webseite\n\nGrüezi mitenand,\n\nIch bin's, Roberto, aus Sevelen. Ich gestalte Webseiten für Unternehmen in unserer Gegend. \n\nMir ist aufgefallen, dass Ihr Internetauftritt ein wenig altbacken wirkt. Das ist schade, weil viele Kunden heutzutage über ihr Handy oder Google nach einem Coiffeur suchen. \n\nFalls Sie möchten, können wir das mal gemeinsam am Telefon durchgehen - ganz unverbindlich, keine Sorge!\n\nFreue mich auf Ihre Rückmeldung!\n\nLiebe Grüsse,\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
+    "createdAt": "2026-03-06T22:37:37.205Z"
+  },
+  {
+    "id": "1772836671664x2dg1",
+    "name": "Atelier Bassi AG",
+    "sector": "coiffeur",
+    "city": "Buchs SG",
+    "url": "https://www.atelierbassi.com",
+    "email": "johnsmith@example.com",
+    "phone": "0314418463",
+    "contactPage": "https://www.atelierbassi.com/contactus",
+    "hasSSL": true,
+    "hasViewport": true,
+    "loadTime": 1884,
+    "score": 14,
+    "problems": [
+      "Sin llamada a la accion clara (CTA)",
+      "Demasiados estilos inline (codigo desordenado)"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Kleiner Tipp zu Ihrer Website\n\nGrüezi mitenand\n\nHier schreibt Roberto aus Sevelen. Ich beschäftige mich mit Websites und bin zufällig auf Ihre gestossen. Mir ist aufgefallen, dass es für Besucher nicht direkt ersichtlich ist, wie sie Sie kontaktieren können. Das ist schade, weil so vielleicht potenzielle Kunden verloren gehen. \n\nGerne werfe ich einen Blick darauf, wenn Sie das möchten — ganz unverbindlich, ein kurzes Telefonat reicht meistens.\n\nFreue mich, von Ihnen zu hören!\n\nLiebe Grüsse\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
+    "createdAt": "2026-03-06T22:37:51.664Z"
+  },
+  {
+    "id": "1772836702798lgu1s",
+    "name": "Coiffure Haag",
+    "sector": "coiffeur",
+    "city": "Haag",
+    "url": "http://www.coiffurehaag.ch",
+    "email": "nweinfelden@coiffurehaag.ch",
+    "phone": "0123456789",
+    "contactPage": "https://coiffurehaag.ch/impressum/",
+    "hasSSL": false,
+    "hasViewport": true,
+    "loadTime": 1722,
+    "score": 34,
+    "problems": [
+      "Sin SSL (no https)",
+      "Sin meta description SEO"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Kleine Verbesserung für Ihre Website\n\nGrüezi mitenand bei Coiffure Haag,\n\nIch bin Roberto, der Webentwickler aus Sevelen. Mir ist aufgefallen, dass einige Browser vor Ihrer Seite warnen, weil sie kein HTTPS hat. Das ist schade, da es potenzielle Kunden abschrecken und Ihre Sichtbarkeit bei Google verringern könnte. \n\nFalls Sie möchten, können wir das in einem kurzen Telefonat mal besprechen. Ganz unverbindlich natürlich.\n\nFreue mich auf Ihre Rückmeldung!\n\nLiebe Grüsse,\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
+    "createdAt": "2026-03-06T22:38:22.798Z"
+  },
+  {
+    "id": "1772836709081hbjuc",
+    "name": "Schwägli Barbara",
+    "sector": "coiffeur",
+    "city": "Haag",
+    "url": "https://schwaegli-barbara.digitalone.site",
+    "email": "",
+    "phone": "+41326410184",
+    "contactPage": "https://schwaegli-barbara.digitalone.site/#contact",
+    "hasSSL": true,
+    "hasViewport": true,
+    "loadTime": 121,
+    "score": 42,
+    "problems": [
+      "Sin meta description SEO",
+      "Sin redes sociales vinculadas",
+      "Sin CMS moderno detectado (web posiblemente hecha a mano)",
+      "Sin favicon",
+      "Imagenes sin texto alternativo (malo para SEO y accesibilidad)",
+      "Sin email de contacto visible"
+    ],
+    "status": "new",
+    "emailDraft": "Betreff: Kleine Anregungen zu Ihrer Webseite\n\nGrüezi Frau Schwägli,\n\nhier ist Roberto, der Webspezialist aus Sevelen. Beim Stöbern auf Ihrer Webseite ist mir aufgefallen, dass sie bei Google nicht so gut auffindbar ist und die Kontaktdaten etwas versteckt sind.\n\nDas könnte potenzielle Kunden abschrecken, die Sie gerne besuchen oder kontaktieren würden.\n\nFalls Sie möchten, können wir uns das gemeinsam mal anschauen - ganz unverbindlich bei einem kurzen Telefonat.\n\nLiebe Grüsse,\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
+    "createdAt": "2026-03-06T22:38:29.081Z"
   }
 ]

@@ -51,43 +51,31 @@ function getClientProblems(problems: string[], sector: string): string[] {
   return result.slice(0, 2); // max 2 problems
 }
 
-export async function generateEmail(
-  businessName: string,
-  city: string,
-  sector: string,
-  problems: string[]
-): Promise<string> {
-  const clientProblems = getClientProblems(problems, sector);
-  const problemText = clientProblems.length > 0
-    ? clientProblems.join(". Ausserdem: ")
-    : "der Webauftritt wirkt etwas veraltet";
+const SYSTEM_PROMPT = `Du bist Roberto, freiberuflicher Webentwickler aus Sevelen. Du schreibst eine kurze, warme Email an einen lokalen Betrieb. Du bist bescheiden, ehrlich und nahbar — wie ein Nachbar, nicht wie ein Verkaeufer.
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4",
-    messages: [
-      {
-        role: "system",
-        content: `Du bist Roberto Salvador, Webentwickler aus Sevelen. Du schreibst wie ein netter Nachbar — locker, ehrlich, herzlich. Kein Verkaeufer, kein Berater, einfach ein freundlicher Typ aus dem Dorf der sich mit Websites auskennt.
+DEIN ANSATZ:
+- Du hast den Betrieb gesehen und er GEFAELLT dir.
+- Du erweiterst dein Portfolio mit lokalen Unternehmen aus der Region Buchs und Umgebung.
+- Du wuerdest dich freuen, mit diesem Betrieb zusammenarbeiten zu duerfen.
+- Du kannst dich flexibel an verschiedene Budgets anpassen.
+- Du bietest ein kurzes, unverbindliches Telefonat an (10 Min).
+- NIEMALS Probleme, Maengel oder Kritik an der Website erwaehnen.
 
-SCHREIBE EINE SEHR KURZE, WARME EMAIL. Maximal 5-6 Saetze. Wie eine WhatsApp-Nachricht, nur als Email.
+BEISPIEL — schreibe GENAU in diesem Stil und dieser Laenge:
 
-BEISPIEL (genau dieser Stil):
+Betreff: Kurze Anfrage von einem Webentwickler aus der Region
 
-Betreff: Kurzer Hinweis zu Ihrer Website
+Grüezi
 
-Grüezi mitenand
+Ich bin freiberuflicher Webentwickler aus Sevelen und schaue mir immer gerne die Webseiten von Unternehmen aus unserer Region an.
 
-Ich bin der Roberto aus Sevelen — ich mache Websites fuer Betriebe hier in der Region.
+Vor kurzem bin ich auf Ihren Betrieb aufmerksam geworden und er hat mir wirklich gut gefallen. Ich erweitere gerade mein Portfolio mit lokalen Betrieben aus der Region Buchs und Umgebung und dachte, es waere schoen, einmal miteinander zu sprechen.
 
-Ich habe mir neulich Ihre Seite angeschaut und mir ist aufgefallen, dass [PROBLEM IN EINFACHEN WORTEN].
+Falls Sie irgendwann ueberlegen, Ihre Webseite zu erneuern oder weiterzuentwickeln, wuerde ich mich sehr freuen, Sie dabei unterstuetzen zu duerfen. Als Freelancer kann ich mich flexibel an verschiedene Budgets anpassen.
 
-Das ist schade, weil [WARUM ES DEM KUNDEN SCHADET — Gaeste, Kunden, Handy, Google].
+Wenn Sie moegen, koennen wir gerne kurz (10 Minuten) telefonieren — ganz unverbindlich.
 
-Wenn Sie moegen, schaue ich mir das gerne mal kurz an — ganz unverbindlich, 5-10 Minuten am Telefon reichen.
-
-Ich freue mich, von Ihnen zu hoeren!
-
-Liebe Grüsse
+Liebe Gruesse
 Roberto
 
 Lweb — Moderne Websites & Apps
@@ -97,25 +85,50 @@ https://www.lweb.ch
 Sevelen
 
 REGELN:
-- Schreibe wie ein Nachbar, NICHT wie eine Firma. Locker, warm, menschlich.
-- "Grüezi mitenand" oder "Grüezi" — NIEMALS "Sehr geehrte Damen und Herren"
-- "Liebe Grüsse" oder "Herzliche Grüsse" — NICHT "Freundliche Grüsse" oder "Mit freundlichen Grüssen"
-- Unterschreibe nur mit "Roberto" — NICHT "Roberto Salvador"
-- Du-Form vermeiden, aber trotzdem nahbar (Sie, aber warm)
-- GENAU so kurz wie das Beispiel. NICHT laenger.
-- Schweizer Hochdeutsch ("ss" statt "ß", "Grüsse" nicht "Grüße")
+- NIEMALS Probleme oder Fehler an der Website erwaehnen. NIEMALS kritisieren. NIEMALS.
+- Ton: "Mir gefaellt Ihr Betrieb, ich wuerde gerne mit Ihnen arbeiten"
+- "Grüezi" als Anrede — NIEMALS "Sehr geehrte Damen und Herren"
+- "Liebe Grüsse" oder "Herzliche Grüsse" — NIEMALS "Freundliche Grüsse" oder "Mit freundlichen Grüssen"
+- Unterschrift nur "Roberto" — NIEMALS "Roberto Salvador"
+- Sie-Form, aber warm und nahbar
+- Schweizer Hochdeutsch ("ss" statt "ß")
 - KEINE technischen Begriffe
-- Sprich ueber Kunden, Gaeste, Handy, Google — was den Betrieb interessiert
 - KEIN Verkaufsdruck
-- Betreff: simpel und kurz
-- Die Unterschrift immer genau wie im Beispiel (mit "Roberto", nicht vollem Namen)
-`,
-      },
-      {
-        role: "user",
-        content: `Email an "${businessName}", ein ${sector} in ${city}.
-Hauptproblem fuer den Kunden: ${problemText}.`,
-      },
+- Betreff: kurz und natuerlich
+- Laenge: maximal so lang wie das Beispiel, NICHT laenger
+- Unterschrift immer genau wie im Beispiel (Name, Firma, Telefon, Email, URL, Ort)
+- Variiere die Formulierungen leicht je nach Betrieb und Branche, aber behalte den gleichen Ton
+`;
+
+export async function generateEmail(
+  businessName: string,
+  city: string,
+  sector: string,
+  problems: string[],
+  customPrompt?: string
+): Promise<string> {
+  const hasWebsite = problems.length > 0 && !problems.includes("Keine eigene Webseite vorhanden");
+  const noWebsite = problems.includes("Keine eigene Webseite vorhanden");
+
+  const context = noWebsite
+    ? "Dieser Betrieb hat noch KEINE eigene Website. Biete an, eine zu erstellen."
+    : hasWebsite
+    ? "Dieser Betrieb hat bereits eine Website. Biete an, sie zu modernisieren oder aufzufrischen."
+    : "Biete an, eine moderne Website zu erstellen oder die bestehende zu verbessern.";
+
+  const userMessage = customPrompt
+    ? `Email an "${businessName}", ein ${sector} in ${city}.
+${context}
+
+ZUSAETZLICHE ANWEISUNG: ${customPrompt}`
+    : `Email an "${businessName}", ein ${sector} in ${city}.
+${context}`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4",
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: userMessage },
     ],
     temperature: 0.7,
   });
