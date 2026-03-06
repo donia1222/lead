@@ -101,6 +101,11 @@ export async function POST(req: NextRequest) {
         problems = ["Keine eigene Webseite vorhanden"];
       }
 
+      if (!email) {
+        console.log(`[API] Sin email - saltando ${result.name}`);
+        continue;
+      }
+
       // Generate personalized email
       console.log(`[API] Generando email con GPT-4...`);
       let emailDraft = "";

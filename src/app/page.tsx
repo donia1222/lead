@@ -73,7 +73,7 @@ export default function Home() {
   const [sectorFilter, setSectorFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
   const [textSearch, setTextSearch] = useState("");
-  const [search, setSearch] = useState({ query: "", sector: "", city: "", cities: [] as string[] });
+  const [search, setSearch] = useState({ query: "", sector: "", sectors: [] as string[], city: "", cities: [] as string[] });
 
   const loadLeads = useCallback(async () => {
     const res = await fetch("/api/leads");
@@ -87,22 +87,23 @@ export default function Home() {
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (!search.sector || search.cities.length === 0) return;
+    if (search.sectors.length === 0 || search.cities.length === 0) return;
 
     setSearching(true);
-    const cities = search.cities;
+    const { sectors, cities } = search;
+    const combos = sectors.flatMap((s) => cities.map((c) => ({ sector: s, city: c })));
     let totalLeads = 0;
     const newIds = new Set<string>();
 
-    for (let i = 0; i < cities.length; i++) {
-      const city = cities[i];
-      setSearchStatus(`Buscando ${search.sector} en ${city} (${i + 1}/${cities.length})...`);
+    for (let i = 0; i < combos.length; i++) {
+      const { sector, city } = combos[i];
+      setSearchStatus(`Buscando ${sector} en ${city} (${i + 1}/${combos.length})...`);
 
       try {
         const res = await fetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: `${search.sector} ${city}`, sector: search.sector, city }),
+          body: JSON.stringify({ query: `${sector} ${city}`, sector, city }),
         });
         const data = await res.json();
         totalLeads += (data.leads?.length || 0);
@@ -110,20 +111,20 @@ export default function Home() {
           data.leads.forEach((l: Lead) => newIds.add(l.id));
         }
       } catch {
-        // continue with next city
+        // continue
       }
     }
 
     setLastSearchIds(newIds);
     if (newIds.size > 0) setFilter("latest");
-    setSearchStatus(`${totalLeads} leads encontrados en ${cities.length} ciudades`);
+    setSearchStatus(`${totalLeads} leads encontrados (${sectors.length} sectores x ${cities.length} ciudades)`);
     await loadLeads();
     setSearching(false);
     setTimeout(() => setSearchStatus(""), 8000);
   }
 
   function selectSearch(sector: string, city: string) {
-    setSearch({ query: `${sector} ${city}`, sector, city, cities: [city] });
+    setSearch({ query: `${sector} ${city}`, sector, sectors: [sector], city, cities: [city] });
   }
 
   async function updateStatus(id: string, status: string) {
@@ -222,44 +223,43 @@ export default function Home() {
           <h2 className="text-lg font-semibold mb-3">Buscar empresas</h2>
           <form onSubmit={handleSearch} className="space-y-4">
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Sector</label>
-              <select
-                value={search.sector}
-                onChange={(e) => {
-                  setSearch({ ...search, sector: e.target.value, query: e.target.value });
-                }}
-                className="w-full bg-gray-800 px-4 py-3 rounded-lg text-white"
-                required
-              >
-                <option value="">-- Sector --</option>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs text-gray-500">Sectores ({search.sectors.length})</label>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setSearch({ ...search, sectors: [...SECTORS] })} className="text-xs text-blue-400 hover:text-blue-300">Todos</button>
+                  <button type="button" onClick={() => setSearch({ ...search, sectors: [] })} className="text-xs text-gray-400 hover:text-gray-300">Ninguno</button>
+                </div>
+              </div>
+              <div className="bg-gray-800 rounded-lg p-3 max-h-44 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1">
                 {SECTORS.map((s) => (
-                  <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                  <label key={s} className={`flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded ${search.sectors.includes(s) ? "bg-blue-900/40 text-white" : "text-gray-300 hover:text-white hover:bg-gray-700"}`}>
+                    <input
+                      type="checkbox"
+                      checked={search.sectors.includes(s)}
+                      onChange={(e) => {
+                        const sectors = e.target.checked
+                          ? [...search.sectors, s]
+                          : search.sectors.filter((x) => x !== s);
+                        setSearch({ ...search, sectors, sector: sectors[0] || "" });
+                      }}
+                      className="rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-600 focus:ring-offset-0"
+                    />
+                    <span className="text-sm">{s.charAt(0).toUpperCase() + s.slice(1)}</span>
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs text-gray-500">Ciudades ({search.cities.length} seleccionadas)</label>
+                <label className="text-xs text-gray-500">Ciudades ({search.cities.length})</label>
                 <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSearch({ ...search, cities: [...CITIES] })}
-                    className="text-xs text-blue-400 hover:text-blue-300"
-                  >
-                    Todas
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSearch({ ...search, cities: [] })}
-                    className="text-xs text-gray-400 hover:text-gray-300"
-                  >
-                    Ninguna
-                  </button>
+                  <button type="button" onClick={() => setSearch({ ...search, cities: [...CITIES] })} className="text-xs text-blue-400 hover:text-blue-300">Todas</button>
+                  <button type="button" onClick={() => setSearch({ ...search, cities: [] })} className="text-xs text-gray-400 hover:text-gray-300">Ninguna</button>
                 </div>
               </div>
-              <div className="bg-gray-800 rounded-lg p-3 max-h-40 overflow-y-auto grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1">
+              <div className="bg-gray-800 rounded-lg p-3 max-h-44 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1">
                 {CITIES.map((c) => (
-                  <label key={c} className="flex items-center gap-1.5 text-sm text-gray-300 hover:text-white cursor-pointer px-1 py-0.5 rounded hover:bg-gray-700">
+                  <label key={c} className={`flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded ${search.cities.includes(c) ? "bg-blue-900/40 text-white" : "text-gray-300 hover:text-white hover:bg-gray-700"}`}>
                     <input
                       type="checkbox"
                       checked={search.cities.includes(c)}
@@ -271,7 +271,7 @@ export default function Home() {
                       }}
                       className="rounded bg-gray-700 border-gray-600 text-blue-600 focus:ring-blue-600 focus:ring-offset-0"
                     />
-                    <span className="text-xs">{c}</span>
+                    <span className="text-sm">{c}</span>
                   </label>
                 ))}
               </div>
@@ -279,23 +279,20 @@ export default function Home() {
             <div className="flex items-center gap-3">
               <button
                 type="submit"
-                disabled={searching || !search.sector || search.cities.length === 0}
+                disabled={searching || search.sectors.length === 0 || search.cities.length === 0}
                 className="px-6 py-2.5 bg-blue-600 rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50"
               >
-                {searching ? "Buscando y analizando..." : `Buscar en ${search.cities.length} ciudad${search.cities.length !== 1 ? "es" : ""}`}
+                {searching ? "Buscando y analizando..." : `Buscar (${search.sectors.length} x ${search.cities.length} = ${search.sectors.length * search.cities.length} búsquedas)`}
               </button>
               {searchStatus && (
                 <span className="text-sm text-yellow-400">{searchStatus}</span>
               )}
             </div>
-            {search.sector && search.cities.length > 0 && (
+            {search.sectors.length > 0 && search.cities.length > 0 && (
               <p className="text-xs text-gray-500">
-                Buscará: <span className="text-gray-300">{search.sector}</span> en{" "}
-                <span className="text-gray-300">
-                  {search.cities.length <= 3
-                    ? search.cities.join(", ")
-                    : `${search.cities.slice(0, 3).join(", ")} y ${search.cities.length - 3} más`}
-                </span>
+                {search.sectors.length <= 3 ? search.sectors.join(", ") : `${search.sectors.slice(0, 3).join(", ")} +${search.sectors.length - 3}`}
+                {" "} en {" "}
+                {search.cities.length <= 3 ? search.cities.join(", ") : `${search.cities.slice(0, 3).join(", ")} +${search.cities.length - 3}`}
               </p>
             )}
           </form>
@@ -594,14 +591,20 @@ export default function Home() {
                     <h4 className="text-sm font-medium text-gray-300">
                       Email listo para enviar
                     </h4>
-                    {lead.email && (
-                      <a
-                        href={`mailto:${lead.email}?subject=Ihre Webseite&body=${encodeURIComponent(lead.emailDraft)}`}
-                        className="text-xs bg-blue-700 hover:bg-blue-600 px-3 py-1 rounded"
-                      >
-                        Abrir en Mail
-                      </a>
-                    )}
+                    {lead.email && (() => {
+                      const draft = showEmail === lead.id && emailContent ? emailContent : lead.emailDraft;
+                      const subjectMatch = draft.match(/^(?:Betreff|Asunto|Subject|Objet|Oggetto):\s*(.+)$/mi);
+                      const subject = subjectMatch ? subjectMatch[1].trim() : "Ihre Webseite";
+                      const body = subjectMatch ? draft.replace(subjectMatch[0], "").trim() : draft;
+                      return (
+                        <a
+                          href={`mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
+                          className="text-xs bg-blue-700 hover:bg-blue-600 px-3 py-1 rounded"
+                        >
+                          Abrir en Mail
+                        </a>
+                      );
+                    })()}
                   </div>
                   {(generatingEmail && showEmail === lead.id) || (translating === lead.id) ? (
                     <p className="text-gray-400 text-sm">

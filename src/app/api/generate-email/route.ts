@@ -10,6 +10,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    console.log(`[generate-email] ${name} | customPrompt: ${customPrompt ? `"${customPrompt}"` : "NONE"}`);
     const email = await generateEmail(name, city, sector, problems, customPrompt);
     if (id) {
       updateLead(id, { emailDraft: email });

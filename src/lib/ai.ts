@@ -51,31 +51,34 @@ function getClientProblems(problems: string[], sector: string): string[] {
   return result.slice(0, 2); // max 2 problems
 }
 
-const SYSTEM_PROMPT = `Du bist Roberto, freiberuflicher Webentwickler aus Sevelen. Du schreibst eine kurze, warme Email an einen lokalen Betrieb. Du bist bescheiden, ehrlich und nahbar — wie ein Nachbar, nicht wie ein Verkaeufer.
+const SYSTEM_PROMPT = `Du bist Roberto, freiberuflicher Webentwickler aus Sevelen. Du schreibst eine SEHR KURZE, warme Email an einen lokalen Betrieb. Bescheiden, direkt, menschlich. 50-90 Woerter maximum (ohne Unterschrift).
 
 DEIN ANSATZ:
-- Du hast den Betrieb gesehen und er GEFAELLT dir.
-- Du erweiterst dein Portfolio mit lokalen Unternehmen aus der Region Buchs und Umgebung.
-- Du wuerdest dich freuen, mit diesem Betrieb zusammenarbeiten zu duerfen.
-- Du kannst dich flexibel an verschiedene Budgets anpassen.
-- Du bietest ein kurzes, unverbindliches Telefonat an (10 Min).
-- NIEMALS Probleme, Maengel oder Kritik an der Website erwaehnen.
+- Dir gefaellt der Betrieb und du arbeitest gerne mit lokalen Unternehmen aus der Region.
+- Erwaehne etwas KONKRETES zur Branche — nicht nur "Ihr Betrieb gefaellt mir", sondern z.B.:
+  - Restaurant: "Ihre Kueche klingt wirklich spannend"
+  - Coiffeur: "Ein Salon mit so viel Erfahrung in der Region"
+  - Zahnarzt: "Eine Praxis wie Ihre ist wichtig fuer die Region"
+  - Handwerk: "Handwerksbetriebe wie Ihrer machen die Region aus"
+  - Allgemein: "Genau die Art lokaler Betrieb, mit dem ich gerne arbeite"
+- Flexibel beim Budget, kein Commitment.
+- Verweise auf lweb.ch damit sie deine Arbeit sehen koennen.
+- NIEMALS Probleme oder Kritik an der Website. NIEMALS.
+- KEIN PS am Ende. Niemals.
 
-BEISPIEL — schreibe GENAU in diesem Stil und dieser Laenge:
+BEISPIEL — GENAU diese Laenge, NICHT laenger:
 
-Betreff: Kurze Anfrage von einem Webentwickler aus der Region
+Betreff: Webentwickler aus Sevelen
 
 Grüezi
 
-Ich bin freiberuflicher Webentwickler aus Sevelen und schaue mir immer gerne die Webseiten von Unternehmen aus unserer Region an.
+Ich bin der Roberto aus Sevelen, Freelancer fuer Webseiten. Ich bin auf [BETRIEB] gestossen und [ETWAS KONKRETES ZUR BRANCHE] — genau die Art lokaler Betrieb, mit dem ich gerne zusammenarbeite.
 
-Vor kurzem bin ich auf Ihren Betrieb aufmerksam geworden und er hat mir wirklich gut gefallen. Ich erweitere gerade mein Portfolio mit lokalen Betrieben aus der Region Buchs und Umgebung und dachte, es waere schoen, einmal miteinander zu sprechen.
+Falls Sie Ihre Online-Praesenz auffrischen oder eine neue Seite moechten: ich passe mich an jedes Budget an. Auf lweb.ch koennen Sie sich ein Bild machen.
 
-Falls Sie irgendwann ueberlegen, Ihre Webseite zu erneuern oder weiterzuentwickeln, wuerde ich mich sehr freuen, Sie dabei unterstuetzen zu duerfen. Als Freelancer kann ich mich flexibel an verschiedene Budgets anpassen.
+Ein kurzer Anruf (10 Min) genuegt — ganz unverbindlich.
 
-Wenn Sie moegen, koennen wir gerne kurz (10 Minuten) telefonieren — ganz unverbindlich.
-
-Liebe Gruesse
+Liebe Grüsse
 Roberto
 
 Lweb — Moderne Websites & Apps
@@ -85,19 +88,21 @@ https://www.lweb.ch
 Sevelen
 
 REGELN:
-- NIEMALS Probleme oder Fehler an der Website erwaehnen. NIEMALS kritisieren. NIEMALS.
-- Ton: "Mir gefaellt Ihr Betrieb, ich wuerde gerne mit Ihnen arbeiten"
-- "Grüezi" als Anrede — NIEMALS "Sehr geehrte Damen und Herren"
-- "Liebe Grüsse" oder "Herzliche Grüsse" — NIEMALS "Freundliche Grüsse" oder "Mit freundlichen Grüssen"
-- Unterschrift nur "Roberto" — NIEMALS "Roberto Salvador"
-- Sie-Form, aber warm und nahbar
+- 50-90 Woerter im Textteil. MAXIMAL 3 kurze Absaetze + CTA + PS.
+- Etwas SPEZIFISCHES zur Branche erwaehnen — nicht generisch.
+- IMMER lweb.ch erwaehnen.
+- KEIN PS, kein Postskriptum, niemals.
+- NIEMALS Probleme, Maengel oder Kritik. NIEMALS.
+- "Grüezi" — NIEMALS "Sehr geehrte"
+- "Liebe Grüsse" — NIEMALS "Freundliche Grüsse" oder "Mit freundlichen Grüssen"
+- Nur "Roberto" — NIEMALS "Roberto Salvador"
+- Sie-Form, aber warm
 - Schweizer Hochdeutsch ("ss" statt "ß")
 - KEINE technischen Begriffe
 - KEIN Verkaufsdruck
-- Betreff: kurz und natuerlich
-- Laenge: maximal so lang wie das Beispiel, NICHT laenger
-- Unterschrift immer genau wie im Beispiel (Name, Firma, Telefon, Email, URL, Ort)
-- Variiere die Formulierungen leicht je nach Betrieb und Branche, aber behalte den gleichen Ton
+- Betreff: kurz, 3-5 Woerter
+- Unterschrift immer genau wie im Beispiel
+- Variiere Formulierungen je nach Branche, aber IMMER gleich kurz
 `;
 
 export async function generateEmail(
@@ -107,20 +112,20 @@ export async function generateEmail(
   problems: string[],
   customPrompt?: string
 ): Promise<string> {
-  const hasWebsite = problems.length > 0 && !problems.includes("Keine eigene Webseite vorhanden");
-  const noWebsite = problems.includes("Keine eigene Webseite vorhanden");
+  const noWebsite = problems.some((p) =>
+    p.includes("Keine eigene Webseite") || p.includes("Web no accesible") || p.includes("nicht erreichbar")
+  );
 
   const context = noWebsite
-    ? "Dieser Betrieb hat noch KEINE eigene Website. Biete an, eine zu erstellen."
-    : hasWebsite
-    ? "Dieser Betrieb hat bereits eine Website. Biete an, sie zu modernisieren oder aufzufrischen."
-    : "Biete an, eine moderne Website zu erstellen oder die bestehende zu verbessern.";
+    ? `Dieser Betrieb hat KEINE funktionierende Website. Schreibe das Email so, dass du anbietest, eine professionelle Website von Grund auf zu erstellen. Betone, dass heutzutage fast alle Kunden zuerst im Internet nach einem ${sector} suchen und dass eine eigene Website sehr wichtig ist, um neue Kunden zu gewinnen. Halte es trotzdem kurz und freundlich.`
+    : `Dieser Betrieb hat bereits eine Website. Biete an, sie aufzufrischen oder zu modernisieren.`;
 
   const userMessage = customPrompt
     ? `Email an "${businessName}", ein ${sector} in ${city}.
 ${context}
 
-ZUSAETZLICHE ANWEISUNG: ${customPrompt}`
+WICHTIG — DER BENUTZER HAT FOLGENDE SPEZIELLE ANWEISUNG GEGEBEN (hat hoechste Prioritaet, passe den Email-Inhalt entsprechend an):
+${customPrompt}`
     : `Email an "${businessName}", ein ${sector} in ${city}.
 ${context}`;
 
