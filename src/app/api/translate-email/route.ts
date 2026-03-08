@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     const translated = response.choices[0].message.content || "";
 
     if (id) {
-      updateLead(id, { emailDraft: translated });
+      await updateLead(id, { emailDraft: translated });
     }
 
     return NextResponse.json({ email: translated });

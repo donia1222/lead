@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     console.log(`[generate-email] ${name} | customPrompt: ${customPrompt ? `"${customPrompt}"` : "NONE"}`);
     const email = await generateEmail(name, city, sector, problems, customPrompt);
     if (id) {
-      updateLead(id, { emailDraft: email });
+      await updateLead(id, { emailDraft: email });
     }
     return NextResponse.json({ email });
   } catch (error: unknown) {

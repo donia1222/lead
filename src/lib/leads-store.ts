@@ -1,46 +1,67 @@
-import fs from "fs";
-import path from "path";
+import Redis from "ioredis";
 import { Lead } from "./types";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const LEADS_FILE = path.join(DATA_DIR, "leads.json");
+const LEADS_KEY = "leads";
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(LEADS_FILE)) {
-    fs.writeFileSync(LEADS_FILE, "[]");
-  }
+function getRedis() {
+  return new Redis(process.env.REDIS_URL || "", {
+    maxRetriesPerRequest: 3,
+    lazyConnect: true,
+  });
 }
 
-export function getLeads(): Lead[] {
-  ensureDataDir();
-  const data = fs.readFileSync(LEADS_FILE, "utf-8");
-  return JSON.parse(data);
-}
-
-export function saveLead(lead: Lead) {
-  const leads = getLeads();
-  const existing = leads.findIndex((l) => l.url === lead.url);
-  if (existing >= 0) {
-    leads[existing] = { ...leads[existing], ...lead };
-  } else {
-    leads.push(lead);
-  }
-  fs.writeFileSync(LEADS_FILE, JSON.stringify(leads, null, 2));
-}
-
-export function updateLead(id: string, updates: Partial<Lead>) {
-  const leads = getLeads();
-  const index = leads.findIndex((l) => l.id === id);
-  if (index >= 0) {
-    leads[index] = { ...leads[index], ...updates };
-    fs.writeFileSync(LEADS_FILE, JSON.stringify(leads, null, 2));
+export async function getLeads(): Promise<Lead[]> {
+  const redis = getRedis();
+  try {
+    const data = await redis.get(LEADS_KEY);
+    return data ? JSON.parse(data) : [];
+  } finally {
+    redis.disconnect();
   }
 }
 
-export function deleteLead(id: string) {
-  const leads = getLeads().filter((l) => l.id !== id);
-  fs.writeFileSync(LEADS_FILE, JSON.stringify(leads, null, 2));
+export async function saveLead(lead: Lead) {
+  const redis = getRedis();
+  try {
+    const leads = await getLeadsWithRedis(redis);
+    const existing = leads.findIndex((l) => l.url === lead.url);
+    if (existing >= 0) {
+      leads[existing] = { ...leads[existing], ...lead };
+    } else {
+      leads.push(lead);
+    }
+    await redis.set(LEADS_KEY, JSON.stringify(leads));
+  } finally {
+    redis.disconnect();
+  }
+}
+
+export async function updateLead(id: string, updates: Partial<Lead>) {
+  const redis = getRedis();
+  try {
+    const leads = await getLeadsWithRedis(redis);
+    const index = leads.findIndex((l) => l.id === id);
+    if (index >= 0) {
+      leads[index] = { ...leads[index], ...updates };
+      await redis.set(LEADS_KEY, JSON.stringify(leads));
+    }
+  } finally {
+    redis.disconnect();
+  }
+}
+
+export async function deleteLead(id: string) {
+  const redis = getRedis();
+  try {
+    const leads = await getLeadsWithRedis(redis);
+    const filtered = leads.filter((l) => l.id !== id);
+    await redis.set(LEADS_KEY, JSON.stringify(filtered));
+  } finally {
+    redis.disconnect();
+  }
+}
+
+async function getLeadsWithRedis(redis: Redis): Promise<Lead[]> {
+  const data = await redis.get(LEADS_KEY);
+  return data ? JSON.parse(data) : [];
 }

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Check existing leads to avoid duplicates
-  const existingLeads = getLeads();
+  const existingLeads = await getLeads();
   const existingDomains = new Set(existingLeads.map((l) => getDomain(l.url)));
   console.log(`[API] Leads existentes: ${existingLeads.length} | Dominios: ${existingDomains.size}`);
   const skipped: string[] = [];
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
         createdAt: new Date().toISOString(),
       };
 
-      saveLead(lead);
+      await saveLead(lead);
       leads.push(lead);
       console.log(`[API] Lead guardado: ${result.name} (${email || "sin email"})`);
 

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getLeads } from "@/lib/leads-store";
 
 export async function GET() {
-  const leads = getLeads();
+  const leads = await getLeads();
 
   const header = "Nombre,Sector,Ciudad,Web,Email,Telefono,Score,Estado,Problemas\n";
   const rows = leads

@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     createdAt: new Date().toISOString(),
   };
 
-  saveLead(lead);
+  await saveLead(lead);
 
   return NextResponse.json(lead);
 }
