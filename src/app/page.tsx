@@ -78,6 +78,9 @@ export default function Home() {
   const [cityFilter, setCityFilter] = useState("");
   const [textSearch, setTextSearch] = useState("");
   const [search, setSearch] = useState({ query: "", sector: "", sectors: [] as string[], city: "", cities: [] as string[] });
+  const [directAdd, setDirectAdd] = useState({ name: "", url: "", sector: "", city: "" });
+  const [addingDirect, setAddingDirect] = useState(false);
+  const [directStatus, setDirectStatus] = useState("");
 
   const loadLeads = useCallback(async () => {
     const res = await fetch("/api/leads");
@@ -125,6 +128,45 @@ export default function Home() {
     await loadLeads();
     setSearching(false);
     setTimeout(() => setSearchStatus(""), 8000);
+  }
+
+  async function handleDirectAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!directAdd.name && !directAdd.url) return;
+
+    setAddingDirect(true);
+    setDirectStatus("Analizando web y generando email...");
+
+    try {
+      let url = directAdd.url.trim();
+      if (url && !url.startsWith("http")) url = "https://" + url;
+
+      const res = await fetch("/api/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: directAdd.name.trim(),
+          url: url,
+          sector: directAdd.sector,
+          city: directAdd.city,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setDirectStatus("Error: " + data.error);
+      } else {
+        setLastSearchIds(new Set([data.id]));
+        setFilter("latest");
+        setDirectStatus("Lead añadido correctamente");
+        setDirectAdd({ name: "", url: "", sector: "", city: "" });
+        await loadLeads();
+      }
+    } catch {
+      setDirectStatus("Error al analizar la web");
+    }
+
+    setAddingDirect(false);
+    setTimeout(() => setDirectStatus(""), 5000);
   }
 
   function selectSearch(sector: string, city: string) {
@@ -358,6 +400,90 @@ export default function Home() {
                 </div>
               </div>
             )}
+
+            {/* Direct add section */}
+            <div className="mt-8 pt-8 border-t border-slate-200">
+              <h3 className="text-lg font-semibold mb-4 text-slate-800">Añadir negocio directo</h3>
+              <p className="text-sm text-slate-500 mb-4">Introduce una URL o nombre de negocio para analizar su web y generar el email</p>
+              <form onSubmit={handleDirectAdd} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-slate-600 mb-1 block">Nombre del negocio *</label>
+                    <input
+                      type="text"
+                      value={directAdd.name}
+                      onChange={(e) => setDirectAdd({ ...directAdd, name: e.target.value })}
+                      placeholder="Ej: Restaurant Löwen"
+                      className="w-full bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-600 mb-1 block">URL de la web *</label>
+                    <input
+                      type="text"
+                      value={directAdd.url}
+                      onChange={(e) => setDirectAdd({ ...directAdd, url: e.target.value })}
+                      placeholder="Ej: www.restaurant-loewen.ch"
+                      className="w-full bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-600 mb-1 block">Sector</label>
+                    <select
+                      value={directAdd.sector}
+                      onChange={(e) => setDirectAdd({ ...directAdd, sector: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Seleccionar sector...</option>
+                      {SECTORS.map((s) => (
+                        <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-600 mb-1 block">Ciudad</label>
+                    <select
+                      value={directAdd.city}
+                      onChange={(e) => setDirectAdd({ ...directAdd, city: e.target.value })}
+                      className="w-full bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Seleccionar ciudad...</option>
+                      {CITIES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <button
+                    type="submit"
+                    disabled={addingDirect || (!directAdd.name && !directAdd.url)}
+                    className="px-8 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-semibold text-sm disabled:opacity-40 transition shadow-sm"
+                  >
+                    {addingDirect ? "Analizando..." : "Analizar y generar email"}
+                  </button>
+                  {directStatus && (
+                    <span className={`text-sm font-medium ${directStatus.startsWith("Error") ? "text-red-600" : "text-emerald-600"}`}>
+                      {directStatus}
+                    </span>
+                  )}
+                </div>
+              </form>
+
+              {addingDirect && (
+                <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="text-sm text-slate-700">
+                      <p className="font-medium">Analizando la web...</p>
+                      <p className="text-slate-500 mt-1">Comprobando SSL, mobile, velocidad, SEO y generando email personalizado</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { scrapeWebsite, calculateScore } from "@/lib/scraper";
 import { saveLead } from "@/lib/leads-store";
+import { generateEmail } from "@/lib/ai";
 import { Lead } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
@@ -12,6 +13,13 @@ export async function POST(req: NextRequest) {
 
   const data = await scrapeWebsite(url);
   const score = calculateScore(data);
+
+  let emailDraft = "";
+  try {
+    emailDraft = await generateEmail(name, city || "", sector || "", data.problems);
+  } catch (e) {
+    console.error("Error generating email:", e);
+  }
 
   const lead: Lead = {
     id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
@@ -28,7 +36,7 @@ export async function POST(req: NextRequest) {
     score,
     problems: data.problems,
     status: "new",
-    emailDraft: "",
+    emailDraft,
     createdAt: new Date().toISOString(),
   };
 
