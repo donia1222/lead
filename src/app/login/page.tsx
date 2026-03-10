@@ -32,12 +32,12 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 flex items-center justify-center p-6">
-      <div className="bg-gray-900 rounded-2xl p-8 w-full max-w-sm border border-gray-800">
-        <h1 className="text-2xl font-bold text-white mb-2 text-center">
+    <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-sm border border-slate-200 shadow-sm">
+        <h1 className="text-2xl font-bold text-slate-900 mb-2 text-center">
           Lead Prospector
         </h1>
-        <p className="text-gray-400 text-sm text-center mb-6">
+        <p className="text-slate-500 text-sm text-center mb-6">
           Zugangscode eingeben
         </p>
 
@@ -47,25 +47,25 @@ export default function LoginPage() {
             placeholder="Code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full bg-slate-50 text-slate-900 px-4 py-3 rounded-lg text-center text-lg tracking-widest border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             autoFocus
             required
           />
 
           {error && (
-            <p className="text-red-400 text-sm text-center">{error}</p>
+            <p className="text-red-500 text-sm text-center">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50"
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 transition-colors"
           >
             {loading ? "..." : "Zugang"}
           </button>
         </form>
 
-        <p className="text-gray-600 text-xs text-center mt-6">Lweb</p>
+        <p className="text-slate-400 text-xs text-center mt-6">Lweb</p>
       </div>
     </main>
   );

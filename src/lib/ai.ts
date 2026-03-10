@@ -76,7 +76,7 @@ Ich bin der Roberto aus Sevelen, Freelancer fuer Webseiten. Ich bin auf [BETRIEB
 
 Falls Sie Ihre Online-Praesenz auffrischen oder eine neue Seite moechten: ich passe mich an jedes Budget an. Auf lweb.ch koennen Sie sich ein Bild machen.
 
-Ein kurzer Anruf (10 Min) genuegt — ganz unverbindlich.
+Schreiben Sie mir gerne per WhatsApp oder E-Mail — ganz unverbindlich.
 
 Liebe Grüsse
 Roberto
