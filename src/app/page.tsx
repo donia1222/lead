@@ -379,6 +379,14 @@ export default function Home() {
               </button>
             )}
             <a
+              href="/nuevos"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition"
+              title="Negocios recién inscritos en el registro"
+            >
+              <span className="hidden sm:inline">Negocios nuevos</span>
+              <span className="sm:hidden">Nuevos</span>
+            </a>
+            <a
               href="/api/leads/export"
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition"
               title="Exportar CSV"

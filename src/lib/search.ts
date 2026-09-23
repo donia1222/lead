@@ -29,6 +29,25 @@ function isBusinessUrl(href: string): boolean {
   return !IGNORE_DOMAINS.some((d) => href.includes(d));
 }
 
+/**
+ * El <h1> de local.ch a veces lleva pegado el reclamo del negocio y sale un
+ * nombre kilometrico ("Dolce Vita Eiscafe GmHh BuchsWillkommen in der
+ * genussvollen Welt..."), que luego acaba en el email que escribe GPT. Si pasa
+ * eso, tiramos del <title>, que si viene limpio.
+ */
+function limpiarNombre(d: cheerio.CheerioAPI): string {
+  const corto = (t: string) => t.replace(/\s+/g, " ").trim();
+  let name = corto(d("h1").first().text());
+  if (name.length > 60) {
+    const titulo = corto(d("title").first().text())
+      .replace(/\s*[-|·–]\s*local\.ch.*$/i, "")
+      .replace(/\s*in\s+\d{4}\s+.*$/i, "");
+    if (titulo && titulo.length <= 60) name = titulo;
+    else name = name.slice(0, 60).replace(/\s+\S*$/, "");
+  }
+  return name;
+}
+
 function getDomain(url: string): string {
   try {
     return new URL(url).hostname.replace("www.", "");
@@ -172,7 +191,7 @@ async function searchLocalCh(what: string, where: string): Promise<SearchResult[
       const detailRes = await axios.get(detailUrl, HTTP);
       const d = cheerio.load(detailRes.data);
 
-      const name = d("h1").text().trim().split("\n")[0].trim();
+      const name = limpiarNombre(d);
       let email = "";
       let phone = "";
       const businessUrls: string[] = [];
@@ -228,7 +247,7 @@ async function searchLocalCh(what: string, where: string): Promise<SearchResult[
   return results;
 }
 
-async function searchDuckDuckGo(query: string): Promise<SearchResult[]> {
+export async function searchDuckDuckGo(query: string): Promise<SearchResult[]> {
   const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query + " website")}`;
   console.log(`  [DDG] URL: ${url}`);
 
@@ -255,4 +274,40 @@ async function searchDuckDuckGo(query: string): Promise<SearchResult[]> {
   });
 
   return results;
+}
+
+/**
+ * ¿Este negocio tiene web propia? Se busca por nombre y pueblo en local.ch, que
+ * es la guia que usa todo el mundo aqui, y de paso salen telefono y email.
+ *
+ * DuckDuckGo ya no sirve para esto: desde su pagina HTML devuelve cero
+ * resultados a cualquier raspador (comprobado el 23.09.2026).
+ *
+ * Solo se da por buena una ficha cuyo nombre se parezca al que buscamos: si no,
+ * el vecino de al lado nos haria creer que este negocio ya tiene web.
+ */
+export async function buscarWeb(
+  nombre: string,
+  localidad: string
+): Promise<{ web: string; email: string; telefono: string }> {
+  const vacio = { web: "", email: "", telefono: "" };
+  const limpio = nombre
+    .replace(/\b(GmbH|AG|KLG|SA|Inh\.|Einzelunternehmen|Verein|Holding)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!limpio) return vacio;
+
+  const llano = (t: string) =>
+    t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const palabras = llano(limpio).split(/[^a-z0-9]+/).filter((w) => w.length > 3);
+  const clave = palabras[0] ?? llano(limpio);
+
+  try {
+    const r = await searchBusinesses(`${limpio} ${localidad}`);
+    const suyo = r.find((x) => llano(x.name).includes(clave));
+    if (!suyo) return vacio;
+    return { web: suyo.url || "", email: suyo.email || "", telefono: suyo.phone || "" };
+  } catch {
+    return vacio;
+  }
 }

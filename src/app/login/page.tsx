@@ -1,17 +1,13 @@
+"use client";
+
 import { useState } from "react";
-import { NextResponse } from "next/server";
-import { getDomain } from "@/lib/utils";
-import { Icon } from "@/components/icon";
-import { Loader } from "@/components/loader";
-import { useToast } from "@/components/ui/use-toast";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const searchParams = useSearchParams();
-  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,54 +20,54 @@ export default function LoginPage() {
       body: JSON.stringify({ code }),
     });
 
-    if (!res.ok) {
-      setLoading(false);
-      setError("Invalid code");
-      return;
-    }
-
     const data = await res.json();
+
     if (data.ok) {
-      window.location.href = "/";
+      router.push("/");
+      router.refresh();
     } else {
+      setError("Falscher Zugangscode");
       setLoading(false);
-      setError("Failed to authenticate");
     }
   }
 
   return (
-    <div className="flex min-h-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Hey</h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="code" className="sr-only">Code</label>
-              <input
-                id="code"
-                name="code"
-                type="text"
-                autoComplete="code"
-                required
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Code"
-              />
-            </div>
-            <div>
-              <button
-                type="submit"
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                {loading ? <Loader /> : "Login"}
-              </button>
-            </div>
-          </div>
+    <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-sm border border-slate-200 shadow-sm">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white grid place-items-center font-bold text-xl shadow-sm mx-auto mb-4">L</div>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2 text-center">
+          Lead Prospector
+        </h1>
+        <p className="text-slate-500 text-sm text-center mb-6">
+          Zugangscode eingeben
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="password"
+            placeholder="Code"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className="w-full bg-slate-50 text-slate-900 px-4 py-3 rounded-lg text-center text-lg tracking-widest border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            autoFocus
+            required
+          />
+
+          {error && (
+            <p className="text-red-500 text-sm text-center">{error}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium disabled:opacity-50 transition-colors"
+          >
+            {loading ? "..." : "Zugang"}
+          </button>
         </form>
+
+        <p className="text-slate-400 text-xs text-center mt-6">Lweb</p>
       </div>
-    </div>
+    </main>
   );
 }

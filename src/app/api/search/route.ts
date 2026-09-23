@@ -101,25 +101,27 @@ export async function POST(req: NextRequest) {
         problems = ["Keine eigene Webseite vorhanden"];
       }
 
-      if (!email) {
-        console.log(`[API] Sin email - saltando ${result.name}`);
-        continue;
-      }
-
-      // Generate personalized email
-      console.log(`[API] Generando email con GPT-4...`);
+      // Sin email NO se descarta: quien no tiene web casi nunca tiene email
+      // publicado, y es justo el mejor cliente. Se guarda para ir a verlo o
+      // llamarlo, y el borrador se genera luego a mano desde el panel (asi no
+      // se gasta GPT en alguien a quien no se le puede escribir).
       let emailDraft = "";
-      try {
-        emailDraft = await generateEmail(
-          result.name,
-          city || "der Region",
-          sector || "Unternehmen",
-          problems
-        );
-        console.log(`[API] Email generado OK (${emailDraft.length} chars)`);
-      } catch (e) {
-        console.log(`[API] ERROR generando email: ${e instanceof Error ? e.message : e}`);
-        emailDraft = `(Error generando email: ${e instanceof Error ? e.message : e})`;
+      if (email) {
+        console.log(`[API] Generando email con GPT-4...`);
+        try {
+          emailDraft = await generateEmail(
+            result.name,
+            city || "der Region",
+            sector || "Unternehmen",
+            problems
+          );
+          console.log(`[API] Email generado OK (${emailDraft.length} chars)`);
+        } catch (e) {
+          console.log(`[API] ERROR generando email: ${e instanceof Error ? e.message : e}`);
+          emailDraft = `(Error generando email: ${e instanceof Error ? e.message : e})`;
+        }
+      } else {
+        console.log(`[API] Sin email: se guarda como visita/telefono (${phone || "sin telefono"})`);
       }
 
       const lead: Lead = {
@@ -143,7 +145,7 @@ export async function POST(req: NextRequest) {
 
       await saveLead(lead);
       leads.push(lead);
-      console.log(`[API] Lead guardado: ${result.name} (${email || "sin email"})`);
+      console.log(`[API] Lead guardado: ${result.name} (${email || (phone ? "sin email, tel " + phone : "sin email ni telefono")})`);
 
       // Delay between requests
       await new Promise((r) => setTimeout(r, 1000));

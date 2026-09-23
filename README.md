@@ -96,6 +96,26 @@ Los emails se generan como Roberto Salvador, freelancer de Sevelen:
 - CTA simple: 5-10 minutos de telefono
 - Firma: Roberto + Lweb + telefono + web
 
+## Negocios nuevos (pestaña «Negocios nuevos»)
+
+Quien acaba de abrir todavia no tiene web, y es cuando esta gastando en todo lo
+demas. Esa pestaña mira el **boletin oficial suizo (SHAB/FOSC)**, donde se
+publica cada dia laborable quien se ha inscrito en el registro de comercio. Es
+publico y no hace falta clave.
+
+- `src/lib/shab.ts` — baja las altas (sub-rubrica HR01) del canton que elijas y
+  saca nombre, calle, codigo postal, numero CHE, forma juridica y a que se dedica.
+- `src/lib/geo.ts` — situa cada direccion (swisstopo) y calcula **minutos en
+  coche** desde Sevelen (OSRM). Ojo: el centro de un municipio no sirve, el de
+  Sevelen cae monte arriba en Windegg y daba 26 minutos hasta Buchs en vez de 11.
+  Se puede cambiar el punto de partida con `BASE_ADDRESS` en `.env.local`.
+- A cada alta se le busca web en local.ch; las que no tienen salen marcadas
+  «sin web», que son las que interesan.
+- Se guarda en `data/nuevos.json`. Al refrescar no se pisan tus notas ni lo que
+  hayas marcado como visitado.
+
+Liechtenstein tiene su propio registro y **no** sale en el boletin suizo.
+
 ## Notas
 
 - Solo para uso local/interno, no se publica en ninguna URL

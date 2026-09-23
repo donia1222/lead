@@ -13,6 +13,11 @@ export interface ScrapedData {
 
 const HTTP_CONFIG = {
   timeout: 10000,
+  // Sin esto, axios convierte solo la respuesta cuando el servidor dice JSON, y
+  // entonces html deja de ser texto: "html.match is not a function" y se pierde
+  // el lead entero. Aqui siempre queremos el texto tal cual llega.
+  responseType: "text" as const,
+  transformResponse: [(d: unknown) => d],
   headers: {
     "User-Agent":
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -34,7 +39,7 @@ export async function scrapeWebsite(url: string): Promise<ScrapedData> {
 
   try {
     const res = await axios.get(url, HTTP_CONFIG);
-    html = res.data;
+    html = typeof res.data === "string" ? res.data : String(res.data ?? "");
   } catch {
     return {
       emails: [],
