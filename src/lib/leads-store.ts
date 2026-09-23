@@ -1,67 +1,66 @@
-import Redis from "ioredis";
+import { promises as fs } from "fs";
+import path from "path";
 import { Lead } from "./types";
 
-const LEADS_KEY = "leads";
+const DATA_DIR = path.join(process.cwd(), "data");
+const LEADS_FILE = path.join(DATA_DIR, "leads.json");
 
-function getRedis() {
-  return new Redis(process.env.REDIS_URL || "", {
-    maxRetriesPerRequest: 3,
-    lazyConnect: true,
-  });
+// Serialize writes so concurrent requests don't overwrite each other.
+let queue: Promise<unknown> = Promise.resolve();
+function withLock<T>(fn: () => Promise<T>): Promise<T> {
+  const run = queue.then(fn, fn);
+  queue = run.catch(() => {});
+  return run;
 }
 
-export async function getLeads(): Promise<Lead[]> {
-  const redis = getRedis();
+async function readLeads(): Promise<Lead[]> {
   try {
-    const data = await redis.get(LEADS_KEY);
+    const data = await fs.readFile(LEADS_FILE, "utf-8");
     return data ? JSON.parse(data) : [];
-  } finally {
-    redis.disconnect();
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw err;
   }
 }
 
+async function writeLeads(leads: Lead[]) {
+  await fs.mkdir(DATA_DIR, { recursive: true });
+  const tmp = `${LEADS_FILE}.tmp`;
+  await fs.writeFile(tmp, JSON.stringify(leads, null, 2));
+  await fs.rename(tmp, LEADS_FILE);
+}
+
+export async function getLeads(): Promise<Lead[]> {
+  return readLeads();
+}
+
 export async function saveLead(lead: Lead) {
-  const redis = getRedis();
-  try {
-    const leads = await getLeadsWithRedis(redis);
+  return withLock(async () => {
+    const leads = await readLeads();
     const existing = leads.findIndex((l) => l.url === lead.url);
     if (existing >= 0) {
       leads[existing] = { ...leads[existing], ...lead };
     } else {
       leads.push(lead);
     }
-    await redis.set(LEADS_KEY, JSON.stringify(leads));
-  } finally {
-    redis.disconnect();
-  }
+    await writeLeads(leads);
+  });
 }
 
 export async function updateLead(id: string, updates: Partial<Lead>) {
-  const redis = getRedis();
-  try {
-    const leads = await getLeadsWithRedis(redis);
+  return withLock(async () => {
+    const leads = await readLeads();
     const index = leads.findIndex((l) => l.id === id);
     if (index >= 0) {
       leads[index] = { ...leads[index], ...updates };
-      await redis.set(LEADS_KEY, JSON.stringify(leads));
+      await writeLeads(leads);
     }
-  } finally {
-    redis.disconnect();
-  }
+  });
 }
 
 export async function deleteLead(id: string) {
-  const redis = getRedis();
-  try {
-    const leads = await getLeadsWithRedis(redis);
-    const filtered = leads.filter((l) => l.id !== id);
-    await redis.set(LEADS_KEY, JSON.stringify(filtered));
-  } finally {
-    redis.disconnect();
-  }
-}
-
-async function getLeadsWithRedis(redis: Redis): Promise<Lead[]> {
-  const data = await redis.get(LEADS_KEY);
-  return data ? JSON.parse(data) : [];
+  return withLock(async () => {
+    const leads = await readLeads();
+    await writeLeads(leads.filter((l) => l.id !== id));
+  });
 }

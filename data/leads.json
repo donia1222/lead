@@ -1,12 +1,12 @@
 [
   {
-    "id": "1772976060828gtuyx",
-    "name": "Blatten-Garage Büchel AG",
-    "sector": "autogarage",
-    "city": "Oberriet",
+    "id": "1790158459944wbnag",
+    "name": "Rhyner AG Café-Konditorei",
+    "sector": "restaurant",
+    "city": "Buchs SG",
     "url": "",
-    "email": "info@blattengarage.ch",
-    "phone": "+41717611515",
+    "email": "info@rhyner.cafe",
+    "phone": "+41817561120",
     "contactPage": "",
     "hasSSL": false,
     "hasViewport": false,
@@ -15,9 +15,9 @@
     "problems": [
       "Keine eigene Webseite vorhanden"
     ],
-    "status": "discarded",
-    "emailDraft": "Betreff: Webpräsenz für Blatten-Garage\n\nGrüezi\n\nIch bin Roberto aus Sevelen, Webentwickler. Ihre Garage hat sich in Oberriet einen guten Ruf erarbeitet - genau so ein lokaler Betrieb, mit dem ich gerne zusammenarbeite.\n\nIn der heutigen Zeit suchen viele Kunden online nach Autogaragen. Eine professionelle Website könnte Ihnen dabei helfen, noch mehr Kunden zu gewinnen. Schauen Sie sich auf lweb.ch ein Bild meiner Arbeit an. \n\nEin kurzes Gespräch genügt - ganz unverbindlich.\n\nLiebe Grüsse\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen",
-    "createdAt": "2026-03-08T13:21:00.828Z"
+    "status": "new",
+    "emailDraft": "Betreff: Website für Café-Konditorei\n\nGrüezi\n\nIch bin der Roberto aus Sevelen und arbeite selbständig im Webbereich. Ihr Café in Buchs mit eigener Konditorei ist etwas Besonderes – solche Betriebe machen die Region lebendig. Gerade in der Gastronomie suchen heute fast alle Gäste zuerst online nach einem Restaurant.\n\nFalls Sie eine professionelle Website von Grund auf möchten: Ich passe mich jedem Budget an. Beispiele finden Sie auf lweb.ch.\n\nSchreiben Sie mir einfach per WhatsApp oder E-Mail – ganz unverbindlich.\n\nLiebe Grüsse  \nRoberto\n\nLweb — Moderne Websites & Apps  \n+41 76 560 86 45  \ninfo@lweb.ch  \nhttps://www.lweb.ch  \nSevelen",
+    "createdAt": "2026-09-23T10:14:19.944Z"
   },
   {
     "id": "1772924696284xbii7",
@@ -689,5 +689,73 @@
     "status": "new",
     "emailDraft": "Betreff: Webentwicklung aus Sevelen\n\nGrüezi\n\nRoberto hier, Webentwickler aus Sevelen. KLENOT AG und Ihr Engagement für Autos haben meine Aufmerksamkeit erregt. Solche lokalen Unternehmen schätze ich sehr.\n\nWenn Sie Ihre Website modernisieren oder aufpolieren möchten, stehe ich zur Verfügung. Mein Budget ist flexibel, auf lweb.ch können Sie meine Arbeiten sehen. \n\nEin kurzes Telefonat genügt, völlig unverbindlich.\n\nLiebe Grüsse\nRoberto\n\nLweb — Moderne Websites & Apps\n+41 76 560 86 45\ninfo@lweb.ch\nhttps://www.lweb.ch\nSevelen\n",
     "createdAt": "2026-03-08T13:21:08.494Z"
+  },
+  {
+    "id": "1790158305781j7qfh",
+    "name": "Wanger Confiserie AG",
+    "sector": "restaurant",
+    "city": "Buchs SG",
+    "url": "http://www.wangerag.ch",
+    "email": "info@wangerag.com",
+    "phone": "0131206141",
+    "contactPage": "http://www.wangerag.ch/DE/Kontakt/tblid/185/Default.asp",
+    "hasSSL": false,
+    "hasViewport": true,
+    "loadTime": 1245,
+    "score": 69,
+    "problems": [
+      "Sin SSL (no https)",
+      "Sin DOCTYPE moderno",
+      "Sin meta description SEO",
+      "Sin llamada a la accion clara (CTA)",
+      "Sin CMS moderno detectado (web posiblemente hecha a mano)",
+      "Sin favicon",
+      "Imagenes sin texto alternativo (malo para SEO y accesibilidad)"
+    ],
+    "status": "new",
+    "emailDraft": "(Error generando email - revisa tu API key de OpenAI)",
+    "createdAt": "2026-09-23T10:11:45.781Z"
+  },
+  {
+    "id": "1790158309994kyzxd",
+    "name": "Dolce Vita Eiscafe GmHh BuchsWillkommen in der genussvollen Welt des Speiseeises der Dolce Vita Eis-Manufaktur in Buchs SG!",
+    "sector": "restaurant",
+    "city": "Buchs SG",
+    "url": "https://www.eismanufaktur-dolcevita.com",
+    "email": "dpo-google@google.com",
+    "phone": "0378151005",
+    "contactPage": "https://www.dolcevita.at/kontakt/",
+    "hasSSL": true,
+    "hasViewport": true,
+    "loadTime": 753,
+    "score": 7,
+    "problems": [
+      "WordPress version antigua"
+    ],
+    "status": "new",
+    "emailDraft": "(Error generando email - revisa tu API key de OpenAI)",
+    "createdAt": "2026-09-23T10:11:49.994Z"
+  },
+  {
+    "id": "1790158315340ru59m",
+    "name": "Buchserhof",
+    "sector": "restaurant",
+    "city": "Buchs SG",
+    "url": "http://www.buchserhof.ch",
+    "email": "info@digicube.li",
+    "phone": "+41 81 755 70 70",
+    "contactPage": "https://buchserhof.ch/kontakt/",
+    "hasSSL": false,
+    "hasViewport": true,
+    "loadTime": 1053,
+    "score": 41,
+    "problems": [
+      "Sin SSL (no https)",
+      "WordPress version antigua",
+      "Demasiados estilos inline (codigo desordenado)"
+    ],
+    "status": "new",
+    "emailDraft": "(Error generando email - revisa tu API key de OpenAI)",
+    "createdAt": "2026-09-23T10:11:55.340Z"
   }
 ]

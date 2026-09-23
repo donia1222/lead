@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
         console.log(`[API] Email generado OK (${emailDraft.length} chars)`);
       } catch (e) {
         console.log(`[API] ERROR generando email: ${e instanceof Error ? e.message : e}`);
-        emailDraft = "(Error generando email - revisa tu API key de OpenAI)";
+        emailDraft = `(Error generando email: ${e instanceof Error ? e.message : e})`;
       }
 
       const lead: Lead = {
