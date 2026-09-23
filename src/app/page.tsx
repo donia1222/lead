@@ -21,6 +21,8 @@ interface Lead {
   createdAt: string;
 }
 
+type Filter = "all" | "new" | "contacted" | "discarded" | "latest";
+
 const SECTORS = [
   "restaurant", "coiffeur", "zahnarzt", "immobilien", "hotel",
   "autogarage", "anwalt", "bäckerei", "tierarzt", "metzgerei",
@@ -42,10 +44,63 @@ const CITIES = [
   "Balzers", "Eschen", "Mauren", "Triesenberg", "Feldkirch",
 ];
 
+const QUICK_COMBOS = [
+  ["restaurant", "Buchs SG"], ["coiffeur", "Sevelen"], ["zahnarzt", "Grabs"],
+  ["autogarage", "Oberriet"], ["anwalt", "Vaduz"], ["elektriker", "Altstätten"],
+];
+
+const LANGS = ["de", "es", "en", "fr", "it"];
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const ICONS: Record<string, string> = {
+  plus: "M12 5v14M5 12h14",
+  x: "M6 6l12 12M18 6L6 18",
+  search: "M21 21l-4.3-4.3M11 18a7 7 0 100-14 7 7 0 000 14z",
+  download: "M12 4v12m0 0l-4-4m4 4l4-4M4 20h16",
+  globe: "M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18",
+  mail: "M4 6h16v12H4zM4 7l8 6 8-6",
+  phone: "M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z",
+  send: "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z",
+  refresh: "M4 4v5h5M20 20v-5h-5M5.5 15a7 7 0 0012.4 2M18.5 9A7 7 0 006.1 7",
+  sparkles: "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z",
+  check: "M5 13l4 4L19 7",
+  archive: "M4 7h16M5 7l1 13h12l1-13M9 4h6M10 11v5M14 11v5",
+  undo: "M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3",
+  trash: "M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3",
+  chevron: "M6 9l6 6 6-6",
+  copy: "M8 8h12v12H8zM16 8V4H4v12h4",
+  lock: "M6 11h12v10H6zM8 11V7a4 4 0 018 0v4",
+  mobile: "M8 2h8a1 1 0 011 1v18a1 1 0 01-1 1H8a1 1 0 01-1-1V3a1 1 0 011-1zM11 18h2",
+  bolt: "M13 2L4 14h7l-1 8 9-12h-7l1-8z",
+  link: "M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1",
+  logout: "M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3M10 17l-5-5 5-5M5 12h11",
+};
+
+function Icon({ name, className = "w-4 h-4" }: { name: string; className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" aria-hidden>
+      <path d={ICONS[name]} />
+    </svg>
+  );
+}
+
+function Spinner({ className = "w-4 h-4" }: { className?: string }) {
+  return <span className={`${className} inline-block border-2 border-current border-t-transparent rounded-full animate-spin`} />;
+}
+
+function splitDraft(draft: string) {
+  const subjectMatch = draft.match(/^(?:Betreff|Asunto|Subject|Objet|Oggetto):\s*(.+)$/mi);
+  const subject = subjectMatch ? subjectMatch[1].trim() : "Ihre Webseite";
+  const body = subjectMatch ? draft.replace(subjectMatch[0], "").trim() : draft;
+  return { subject, body };
+}
+
 export default function Home() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [searching, setSearching] = useState(false);
-  const [searchStatus, setSearchStatus] = useState("");
+  const [searchProgress, setSearchProgress] = useState({ done: 0, total: 0, label: "" });
   const [showEmail, setShowEmail] = useState<string | null>(null);
   const [emailContent, setEmailContent] = useState("");
   const [generatingEmail, setGeneratingEmail] = useState(false);
@@ -53,44 +108,47 @@ export default function Home() {
   const [showPromptFor, setShowPromptFor] = useState<string | null>(null);
   const [translating, setTranslating] = useState<string | null>(null);
   const [lastSearchIds, setLastSearchIds] = useState<Set<string>>(new Set());
-  const [showSearch, setShowSearch] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelTab, setPanelTab] = useState<"search" | "direct">("search");
   const [expandedEmail, setExpandedEmail] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ text: string; kind: "ok" | "error" } | null>(null);
 
-  async function handleTranslate(lead: Lead, lang: string) {
-    setTranslating(lead.id);
-    setShowEmail(lead.id);
-    setExpandedEmail(lead.id);
-    setEmailContent("");
-    const currentEmail = lead.emailDraft;
-    const res = await fetch("/api/translate-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: lead.id, email: currentEmail, lang }),
-    });
-    const data = await res.json();
-    setEmailContent(data.email || data.error);
-    setTranslating(null);
-    await loadLeads();
-  }
-
-  const [filter, setFilter] = useState<"all" | "new" | "contacted" | "discarded" | "latest">("all");
+  const [filter, setFilter] = useState<Filter>("all");
   const [sectorFilter, setSectorFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
   const [textSearch, setTextSearch] = useState("");
-  const [search, setSearch] = useState({ query: "", sector: "", sectors: [] as string[], city: "", cities: [] as string[] });
+  const [sortBy, setSortBy] = useState<"newest" | "score">("newest");
+  const [search, setSearch] = useState({ sectors: [] as string[], cities: [] as string[] });
+  const [sectorQuery, setSectorQuery] = useState("");
+  const [cityQuery, setCityQuery] = useState("");
   const [directAdd, setDirectAdd] = useState({ name: "", url: "", sector: "", city: "" });
   const [addingDirect, setAddingDirect] = useState(false);
-  const [directStatus, setDirectStatus] = useState("");
 
   const loadLeads = useCallback(async () => {
     const res = await fetch("/api/leads");
     const data = await res.json();
-    setLeads(data);
+    setLeads(Array.isArray(data) ? data : []);
+    setLoaded(true);
   }, []);
 
   useEffect(() => {
     loadLeads();
   }, [loadLeads]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  useEffect(() => {
+    if (!panelOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setPanelOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [panelOpen]);
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -104,7 +162,7 @@ export default function Home() {
 
     for (let i = 0; i < combos.length; i++) {
       const { sector, city } = combos[i];
-      setSearchStatus(`Buscando ${sector} en ${city} (${i + 1}/${combos.length})...`);
+      setSearchProgress({ done: i, total: combos.length, label: `${cap(sector)} en ${city}` });
 
       try {
         const res = await fetch("/api/search", {
@@ -124,10 +182,11 @@ export default function Home() {
 
     setLastSearchIds(newIds);
     if (newIds.size > 0) setFilter("latest");
-    setSearchStatus(`${totalLeads} leads encontrados`);
     await loadLeads();
     setSearching(false);
-    setTimeout(() => setSearchStatus(""), 8000);
+    setSearchProgress({ done: 0, total: 0, label: "" });
+    setToast({ text: `Búsqueda terminada: ${totalLeads} leads encontrados`, kind: "ok" });
+    if (newIds.size > 0) setPanelOpen(false);
   }
 
   async function handleDirectAdd(e: React.FormEvent) {
@@ -135,7 +194,6 @@ export default function Home() {
     if (!directAdd.name && !directAdd.url) return;
 
     setAddingDirect(true);
-    setDirectStatus("Analizando web y generando email...");
 
     try {
       let url = directAdd.url.trim();
@@ -153,24 +211,30 @@ export default function Home() {
       });
       const data = await res.json();
       if (data.error) {
-        setDirectStatus("Error: " + data.error);
+        setToast({ text: "Error: " + data.error, kind: "error" });
       } else {
         setLastSearchIds(new Set([data.id]));
         setFilter("latest");
-        setDirectStatus("Lead añadido correctamente");
+        setToast({ text: "Lead añadido correctamente", kind: "ok" });
         setDirectAdd({ name: "", url: "", sector: "", city: "" });
         await loadLeads();
+        setPanelOpen(false);
       }
     } catch {
-      setDirectStatus("Error al analizar la web");
+      setToast({ text: "Error al analizar la web", kind: "error" });
     }
 
     setAddingDirect(false);
-    setTimeout(() => setDirectStatus(""), 5000);
   }
 
   function selectSearch(sector: string, city: string) {
-    setSearch({ query: `${sector} ${city}`, sector, sectors: [sector], city, cities: [city] });
+    setSearch({ sectors: [sector], cities: [city] });
+  }
+
+  function toggle(list: "sectors" | "cities", value: string) {
+    const current = search[list];
+    const next = current.includes(value) ? current.filter((x) => x !== value) : [...current, value];
+    setSearch({ ...search, [list]: next });
   }
 
   async function updateStatus(id: string, status: string) {
@@ -183,6 +247,7 @@ export default function Home() {
   }
 
   async function removeLead(id: string) {
+    setConfirmDelete(null);
     await fetch("/api/leads", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -216,10 +281,39 @@ export default function Home() {
     await loadLeads();
   }
 
+  async function handleTranslate(lead: Lead, lang: string) {
+    setTranslating(lead.id);
+    setShowEmail(lead.id);
+    setExpandedEmail(lead.id);
+    setEmailContent("");
+    const res = await fetch("/api/translate-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: lead.id, email: lead.emailDraft, lang }),
+    });
+    const data = await res.json();
+    setEmailContent(data.email || data.error);
+    setTranslating(null);
+    await loadLeads();
+  }
+
+  async function logout() {
+    await fetch("/api/auth", { method: "DELETE" });
+    window.location.href = "/login";
+  }
+
+  async function copyDraft(id: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(id);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      setToast({ text: "No se pudo copiar", kind: "error" });
+    }
+  }
+
   const sectors = [...new Set(leads.map((l) => l.sector).filter(Boolean))].sort();
   const cities = [...new Set(leads.map((l) => l.city).filter(Boolean))].sort();
-
-  const [sortBy, setSortBy] = useState<"newest" | "score">("newest");
 
   const filtered = leads
     .filter((l) => {
@@ -247,600 +341,643 @@ export default function Home() {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
-  const countAll = leads.filter((l) => l.status !== "discarded").length;
-  const countNew = leads.filter((l) => l.status === "new").length;
-  const countContacted = leads.filter((l) => l.status === "contacted").length;
-  const countDiscarded = leads.filter((l) => l.status === "discarded").length;
+  const tabs: { f: Filter; label: string; count: number }[] = [
+    ...(lastSearchIds.size > 0 ? [{ f: "latest" as const, label: "Última búsqueda", count: lastSearchIds.size }] : []),
+    { f: "all", label: "Activos", count: leads.filter((l) => l.status !== "discarded").length },
+    { f: "new", label: "Nuevos", count: leads.filter((l) => l.status === "new").length },
+    { f: "contacted", label: "Contactados", count: leads.filter((l) => l.status === "contacted").length },
+    { f: "discarded", label: "Descartados", count: leads.filter((l) => l.status === "discarded").length },
+  ];
+
+  const hasFilters = sectorFilter || cityFilter || textSearch;
+  const combos = search.sectors.length * search.cities.length;
+  const progressPct = searchProgress.total ? Math.round((searchProgress.done / searchProgress.total) * 100) : 0;
+
+  const inputCls = "w-full bg-white border border-slate-200 px-3.5 py-2.5 rounded-lg text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition";
+  const selectCls = "bg-white border border-slate-200 pl-3 pr-8 py-2 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition";
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      {/* Top navbar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Lead Prospector
-            </h1>
-            <span className="text-sm text-slate-400 hidden sm:block">
-              {leads.length} leads guardados
-            </span>
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur border-b border-slate-200 sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white grid place-items-center font-bold shadow-sm">L</div>
+            <div className="min-w-0">
+              <h1 className="text-base font-semibold leading-tight">Lead Prospector</h1>
+              <p className="text-xs text-slate-500">{leads.length} leads guardados</p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowSearch(!showSearch)}
-              className={`px-5 py-2 rounded-lg text-sm font-medium transition ${
-                showSearch
-                  ? "bg-slate-200 text-slate-700"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              }`}
-            >
-              {showSearch ? "Cerrar buscador" : "Nueva busqueda"}
-            </button>
+          <div className="flex items-center gap-2">
+            {searching && !panelOpen && (
+              <button
+                onClick={() => setPanelOpen(true)}
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium"
+              >
+                <Spinner className="w-3 h-3" />
+                Buscando {searchProgress.done + 1}/{searchProgress.total}
+              </button>
+            )}
             <a
               href="/api/leads/export"
-              className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition"
+              title="Exportar CSV"
             >
-              Exportar CSV
+              <Icon name="download" />
+              <span className="hidden sm:inline">Exportar CSV</span>
             </a>
+            <button
+              onClick={() => setPanelOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 shadow-sm transition"
+            >
+              <Icon name="plus" />
+              <span>Nuevos leads</span>
+            </button>
+            <button
+              onClick={logout}
+              title="Cerrar sesión"
+              aria-label="Cerrar sesión"
+              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
+            >
+              <Icon name="logout" />
+            </button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* Search Panel - collapsible */}
-        {showSearch && (
-          <div className="bg-white rounded-2xl p-8 mb-8 border border-slate-200 shadow-sm">
-            <h2 className="text-xl font-semibold mb-5 text-slate-800">Buscar empresas</h2>
-            <form onSubmit={handleSearch} className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Sectors */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-slate-600">
-                      Sectores ({search.sectors.length})
-                    </label>
-                    <div className="flex gap-3">
-                      <button type="button" onClick={() => setSearch({ ...search, sectors: [...SECTORS] })} className="text-xs font-medium text-blue-600 hover:text-blue-800">Todos</button>
-                      <button type="button" onClick={() => setSearch({ ...search, sectors: [] })} className="text-xs font-medium text-slate-400 hover:text-slate-600">Ninguno</button>
-                    </div>
-                  </div>
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 max-h-48 overflow-y-auto grid grid-cols-2 md:grid-cols-3 gap-1">
-                    {SECTORS.map((s) => (
-                      <label key={s} className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg text-sm transition ${search.sectors.includes(s) ? "bg-blue-50 text-blue-700 font-medium" : "text-slate-600 hover:bg-slate-100"}`}>
-                        <input
-                          type="checkbox"
-                          checked={search.sectors.includes(s)}
-                          onChange={(e) => {
-                            const sectors = e.target.checked
-                              ? [...search.sectors, s]
-                              : search.sectors.filter((x) => x !== s);
-                            setSearch({ ...search, sectors, sector: sectors[0] || "" });
-                          }}
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        {s.charAt(0).toUpperCase() + s.slice(1)}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Cities */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-slate-600">
-                      Ciudades ({search.cities.length})
-                    </label>
-                    <div className="flex gap-3">
-                      <button type="button" onClick={() => setSearch({ ...search, cities: [...CITIES] })} className="text-xs font-medium text-blue-600 hover:text-blue-800">Todas</button>
-                      <button type="button" onClick={() => setSearch({ ...search, cities: [] })} className="text-xs font-medium text-slate-400 hover:text-slate-600">Ninguna</button>
-                    </div>
-                  </div>
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 max-h-48 overflow-y-auto grid grid-cols-2 md:grid-cols-3 gap-1">
-                    {CITIES.map((c) => (
-                      <label key={c} className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg text-sm transition ${search.cities.includes(c) ? "bg-blue-50 text-blue-700 font-medium" : "text-slate-600 hover:bg-slate-100"}`}>
-                        <input
-                          type="checkbox"
-                          checked={search.cities.includes(c)}
-                          onChange={(e) => {
-                            const cities = e.target.checked
-                              ? [...search.cities, c]
-                              : search.cities.filter((x) => x !== c);
-                            setSearch({ ...search, cities, city: cities[0] || "" });
-                          }}
-                          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        {c}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick combos */}
-              <div className="flex gap-2 flex-wrap items-center">
-                <span className="text-sm text-slate-400">Rapido:</span>
-                {[
-                  ["restaurant", "Buchs SG"], ["coiffeur", "Sevelen"], ["zahnarzt", "Grabs"],
-                  ["autogarage", "Oberriet"], ["anwalt", "Vaduz"], ["elektriker", "Altstätten"],
-                ].map(([s, c]) => (
-                  <button
-                    key={`${s}-${c}`}
-                    type="button"
-                    onClick={() => selectSearch(s, c)}
-                    className="text-sm bg-slate-100 hover:bg-slate-200 px-4 py-1.5 rounded-full text-slate-600 hover:text-slate-800 transition"
-                  >
-                    {s} {c}
-                  </button>
-                ))}
-              </div>
-
-              {/* Search button */}
-              <div className="flex items-center gap-4">
-                <button
-                  type="submit"
-                  disabled={searching || search.sectors.length === 0 || search.cities.length === 0}
-                  className="px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold text-base disabled:opacity-40 transition shadow-sm"
-                >
-                  {searching ? "Buscando..." : `Buscar (${search.sectors.length * search.cities.length} combinaciones)`}
-                </button>
-                {searchStatus && (
-                  <span className="text-sm font-medium text-amber-600">{searchStatus}</span>
-                )}
-              </div>
-            </form>
-
-            {searching && (
-              <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                  <div className="text-sm text-slate-700">
-                    <p className="font-medium">Buscando en local.ch y DuckDuckGo...</p>
-                    <p className="text-slate-500 mt-1">Analizando webs y generando emails con GPT-4 (30-60s)</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Direct add section */}
-            <div className="mt-8 pt-8 border-t border-slate-200">
-              <h3 className="text-lg font-semibold mb-4 text-slate-800">Añadir negocio directo</h3>
-              <p className="text-sm text-slate-500 mb-4">Introduce una URL o nombre de negocio para analizar su web y generar el email</p>
-              <form onSubmit={handleDirectAdd} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-slate-600 mb-1 block">Nombre del negocio *</label>
-                    <input
-                      type="text"
-                      value={directAdd.name}
-                      onChange={(e) => setDirectAdd({ ...directAdd, name: e.target.value })}
-                      placeholder="Ej: Restaurant Löwen"
-                      className="w-full bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-600 mb-1 block">URL de la web *</label>
-                    <input
-                      type="text"
-                      value={directAdd.url}
-                      onChange={(e) => setDirectAdd({ ...directAdd, url: e.target.value })}
-                      placeholder="Ej: www.restaurant-loewen.ch"
-                      className="w-full bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-600 mb-1 block">Sector</label>
-                    <select
-                      value={directAdd.sector}
-                      onChange={(e) => setDirectAdd({ ...directAdd, sector: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Seleccionar sector...</option>
-                      {SECTORS.map((s) => (
-                        <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-600 mb-1 block">Ciudad</label>
-                    <select
-                      value={directAdd.city}
-                      onChange={(e) => setDirectAdd({ ...directAdd, city: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Seleccionar ciudad...</option>
-                      {CITIES.map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <button
-                    type="submit"
-                    disabled={addingDirect || (!directAdd.name && !directAdd.url)}
-                    className="px-8 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-semibold text-sm disabled:opacity-40 transition shadow-sm"
-                  >
-                    {addingDirect ? "Analizando..." : "Analizar y generar email"}
-                  </button>
-                  {directStatus && (
-                    <span className={`text-sm font-medium ${directStatus.startsWith("Error") ? "text-red-600" : "text-emerald-600"}`}>
-                      {directStatus}
-                    </span>
-                  )}
-                </div>
-              </form>
-
-              {addingDirect && (
-                <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                    <div className="text-sm text-slate-700">
-                      <p className="font-medium">Analizando la web...</p>
-                      <p className="text-slate-500 mt-1">Comprobando SSL, mobile, velocidad, SEO y generando email personalizado</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Stats bar */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          {[
-            { label: "Activos", count: countAll, color: "bg-blue-50 border-blue-200 text-blue-700", f: "all" as const },
-            { label: "Nuevos", count: countNew, color: "bg-slate-50 border-slate-200 text-slate-700", f: "new" as const },
-            { label: "Contactados", count: countContacted, color: "bg-emerald-50 border-emerald-200 text-emerald-700", f: "contacted" as const },
-            { label: "Descartados", count: countDiscarded, color: "bg-orange-50 border-orange-200 text-orange-600", f: "discarded" as const },
-          ].map((stat) => (
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        {/* Status tabs */}
+        <div className="flex gap-1 overflow-x-auto pb-1 mb-4 -mx-1 px-1">
+          {tabs.map((t) => (
             <button
-              key={stat.f}
-              onClick={() => setFilter(stat.f)}
-              className={`rounded-xl border p-4 text-left transition hover:shadow-sm ${stat.color} ${
-                filter === stat.f ? "ring-2 ring-blue-500 shadow-sm" : ""
+              key={t.f}
+              onClick={() => setFilter(t.f)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition ${
+                filter === t.f
+                  ? t.f === "latest"
+                    ? "bg-amber-500 text-white shadow-sm"
+                    : "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-600 hover:bg-white hover:shadow-sm"
               }`}
             >
-              <p className="text-3xl font-bold">{stat.count}</p>
-              <p className="text-sm font-medium mt-1">{stat.label}</p>
+              {t.label}
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${filter === t.f ? "bg-white/20" : "bg-slate-200 text-slate-600"}`}>
+                {t.count}
+              </span>
             </button>
           ))}
         </div>
 
-        {/* Filters row */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6 flex flex-wrap items-center gap-3">
-          {lastSearchIds.size > 0 && (
-            <button
-              onClick={() => setFilter("latest")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                filter === "latest"
-                  ? "bg-amber-100 text-amber-800 ring-2 ring-amber-400"
-                  : "bg-amber-50 text-amber-700 hover:bg-amber-100"
-              }`}
-            >
-              Ultima busqueda ({lastSearchIds.size})
-            </button>
-          )}
-
-          <select
-            value={sectorFilter}
-            onChange={(e) => setSectorFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-sm text-slate-700"
-          >
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center gap-2 mb-5">
+          <div className="relative flex-1 min-w-[220px]">
+            <Icon name="search" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              placeholder="Buscar por nombre, email, web..."
+              value={textSearch}
+              onChange={(e) => setTextSearch(e.target.value)}
+              className={`${inputCls} pl-9 py-2`}
+            />
+          </div>
+          <select value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)} className={selectCls}>
             <option value="">Todos los sectores</option>
             {sectors.map((s) => (
-              <option key={s} value={s}>
-                {s} ({leads.filter((l) => l.sector === s).length})
-              </option>
+              <option key={s} value={s}>{cap(s)} ({leads.filter((l) => l.sector === s).length})</option>
             ))}
           </select>
-
-          <select
-            value={cityFilter}
-            onChange={(e) => setCityFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-sm text-slate-700"
-          >
+          <select value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} className={selectCls}>
             <option value="">Todas las ciudades</option>
             {cities.map((c) => (
-              <option key={c} value={c}>
-                {c} ({leads.filter((l) => l.city === c).length})
-              </option>
+              <option key={c} value={c}>{c} ({leads.filter((l) => l.city === c).length})</option>
             ))}
           </select>
-
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as "newest" | "score")}
-            className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-sm text-slate-700"
-          >
-            <option value="newest">Mas recientes</option>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value as "newest" | "score")} className={selectCls}>
+            <option value="newest">Más recientes</option>
             <option value="score">Mayor oportunidad</option>
           </select>
-
-          <input
-            placeholder="Buscar lead..."
-            value={textSearch}
-            onChange={(e) => setTextSearch(e.target.value)}
-            className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg text-sm flex-1 min-w-[200px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-
-          {(sectorFilter || cityFilter || textSearch) && (
+          {hasFilters && (
             <button
               onClick={() => { setSectorFilter(""); setCityFilter(""); setTextSearch(""); }}
-              className="text-sm text-slate-400 hover:text-slate-600 px-3 py-2 transition"
+              className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 px-2 py-2 transition"
             >
-              Limpiar
+              <Icon name="x" className="w-3.5 h-3.5" /> Limpiar
             </button>
           )}
-
-          <span className="text-sm text-slate-400 ml-auto">
-            {filtered.length} leads
-          </span>
         </div>
 
-        {/* Leads table */}
-        <div className="space-y-4">
-          {filtered.map((lead) => (
-            <div
-              key={lead.id}
-              className={`bg-white rounded-2xl border p-6 transition hover:shadow-md ${
-                lead.status === "contacted"
-                  ? "border-emerald-300"
-                  : lead.status === "discarded"
-                  ? "border-orange-200 opacity-70"
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-3">
+          {filtered.length} {filtered.length === 1 ? "lead" : "leads"}
+        </p>
+
+        {/* Leads */}
+        <div className="space-y-3">
+          {filtered.map((lead) => {
+            const isOpen = expandedEmail === lead.id;
+            const draft = showEmail === lead.id && emailContent ? emailContent : lead.emailDraft;
+            const busy = (generatingEmail && showEmail === lead.id) || translating === lead.id;
+            const href = lead.url.startsWith("http") ? lead.url : "https://" + lead.url;
+            const scoreCls =
+              lead.score >= 50 ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+              : lead.score >= 25 ? "bg-amber-50 text-amber-700 ring-amber-200"
+              : "bg-rose-50 text-rose-600 ring-rose-200";
+
+            return (
+              <article
+                key={lead.id}
+                className={`bg-white rounded-2xl border shadow-sm transition hover:shadow-md ${
+                  lead.status === "contacted" ? "border-emerald-200"
+                  : lead.status === "discarded" ? "border-slate-200 opacity-60 hover:opacity-100"
                   : "border-slate-200"
-              }`}
-            >
-              <div className="flex items-start gap-6">
-                {/* Score circle */}
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-xl ${
-                  lead.score >= 50
-                    ? "bg-emerald-100 text-emerald-700"
-                    : lead.score >= 25
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-red-100 text-red-600"
-                }`}>
-                  {lead.score}
-                </div>
+                }`}
+              >
+                <div className="p-4 sm:p-5">
+                  <div className="flex items-start gap-4">
+                    {/* Score */}
+                    <div className={`w-14 h-14 rounded-xl ring-1 flex flex-col items-center justify-center flex-shrink-0 ${scoreCls}`} title="Puntuación de oportunidad">
+                      <span className="text-lg font-bold leading-none">{lead.score}</span>
+                      <span className="text-[10px] font-medium mt-0.5 opacity-80">score</span>
+                    </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1">
-                    <h3 className="text-xl font-semibold text-slate-900 truncate">{lead.name}</h3>
-                    {lead.status === "contacted" && (
-                      <span className="text-xs bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-medium">
-                        Contactado
-                      </span>
-                    )}
-                    {lead.status === "discarded" && (
-                      <span className="text-xs bg-orange-100 text-orange-600 px-2.5 py-1 rounded-full font-medium">
-                        Descartado
-                      </span>
-                    )}
-                  </div>
+                    {/* Main info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <h3 className="text-base sm:text-lg font-semibold text-slate-900 truncate">{lead.name}</h3>
+                        {lead.status === "contacted" && (
+                          <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
+                            <Icon name="check" className="w-3 h-3" /> Contactado
+                          </span>
+                        )}
+                        {lead.status === "discarded" && (
+                          <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">Descartado</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-500 mt-0.5">
+                        {[lead.sector && cap(lead.sector), lead.city].filter(Boolean).join(" · ")}
+                      </p>
 
-                  <div className="flex items-center gap-2 mb-3">
-                    {lead.sector && (
-                      <span className="text-sm bg-slate-100 text-slate-600 px-3 py-1 rounded-full">
-                        {lead.sector.charAt(0).toUpperCase() + lead.sector.slice(1)}
-                      </span>
-                    )}
-                    {lead.city && (
-                      <span className="text-sm text-slate-500">{lead.city}</span>
-                    )}
-                  </div>
+                      {/* Contact */}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm">
+                        <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-indigo-600 hover:underline max-w-[260px]">
+                          <Icon name="globe" className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="truncate">{lead.url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</span>
+                        </a>
+                        {lead.email ? (
+                          <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 text-slate-700 hover:underline">
+                            <Icon name="mail" className="w-3.5 h-3.5 text-slate-400" />
+                            {lead.email}
+                          </a>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-rose-500">
+                            <Icon name="mail" className="w-3.5 h-3.5" /> Sin email
+                          </span>
+                        )}
+                        {lead.phone && (
+                          <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1.5 text-slate-700 hover:underline">
+                            <Icon name="phone" className="w-3.5 h-3.5 text-slate-400" />
+                            {lead.phone}
+                          </a>
+                        )}
+                        {lead.contactPage && (
+                          <a href={lead.contactPage} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-slate-500 hover:underline">
+                            <Icon name="link" className="w-3.5 h-3.5 text-slate-400" /> Contacto
+                          </a>
+                        )}
+                      </div>
 
-                  <div className="flex flex-wrap items-center gap-4 text-sm mb-3">
-                    <a
-                      href={lead.url.startsWith("http") ? lead.url : "https://" + lead.url}
-                      target="_blank"
-                      className="text-blue-600 hover:text-blue-800 hover:underline truncate max-w-sm"
-                    >
-                      {lead.url}
-                    </a>
-                    {lead.email ? (
-                      <a href={`mailto:${lead.email}`} className="text-emerald-600 hover:underline font-medium">
-                        {lead.email}
-                      </a>
-                    ) : (
-                      <span className="text-red-400 text-sm">Sin email</span>
-                    )}
-                    {lead.phone && (
-                      <a href={`tel:${lead.phone}`} className="text-slate-500 hover:text-slate-700">
-                        {lead.phone}
-                      </a>
-                    )}
-                  </div>
-
-                  {/* Problems */}
-                  {lead.problems.length > 0 && (
-                    <div className="flex gap-2 flex-wrap mb-3">
-                      {lead.problems.map((p, i) => (
-                        <span
-                          key={i}
-                          className="text-xs bg-red-50 text-red-600 px-2.5 py-1 rounded-full border border-red-200"
-                        >
-                          {p}
+                      {/* Checks + problems */}
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md ${lead.hasSSL ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-600"}`}>
+                          <Icon name="lock" className="w-3 h-3" /> {lead.hasSSL ? "SSL" : "Sin SSL"}
                         </span>
-                      ))}
+                        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md ${lead.hasViewport ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-600"}`}>
+                          <Icon name="mobile" className="w-3 h-3" /> {lead.hasViewport ? "Mobile OK" : "No mobile"}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                          <Icon name="bolt" className="w-3 h-3" /> {lead.loadTime}ms
+                        </span>
+                        {lead.problems.map((p, i) => (
+                          <span key={i} className="text-xs px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-100">
+                            {p}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Primary action (desktop) */}
+                    <div className="hidden md:flex flex-col items-end gap-2 flex-shrink-0">
+                      {lead.email && draft && (() => {
+                        const { subject, body } = splitDraft(draft);
+                        return (
+                          <a
+                            href={`mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 shadow-sm transition"
+                          >
+                            <Icon name="send" /> Enviar email
+                          </a>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Action bar */}
+                  <div className="flex flex-wrap items-center gap-1.5 mt-4 pt-3 border-t border-slate-100">
+                    {lead.email && draft && (() => {
+                      const { subject, body } = splitDraft(draft);
+                      return (
+                        <a
+                          href={`mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
+                          className="md:hidden inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm font-medium"
+                        >
+                          <Icon name="send" className="w-3.5 h-3.5" /> Enviar
+                        </a>
+                      );
+                    })()}
+                    {lead.emailDraft && (
+                      <button
+                        onClick={() => setExpandedEmail(isOpen ? null : lead.id)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                          isOpen ? "bg-indigo-50 text-indigo-700" : "text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        <Icon name="mail" className="w-3.5 h-3.5" />
+                        {isOpen ? "Ocultar borrador" : "Ver borrador"}
+                        <Icon name="chevron" className={`w-3.5 h-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleGenerateEmail(lead)}
+                      disabled={busy}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-40 transition"
+                    >
+                      <Icon name="refresh" className="w-3.5 h-3.5" /> {lead.emailDraft ? "Regenerar" : "Generar email"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowPromptFor(showPromptFor === lead.id ? null : lead.id);
+                        setCustomPrompt("");
+                      }}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition ${
+                        showPromptFor === lead.id ? "bg-violet-50 text-violet-700" : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      <Icon name="sparkles" className="w-3.5 h-3.5" /> Personalizar
+                    </button>
+
+                    <div className="flex items-center gap-1 ml-auto">
+                      {lead.status !== "contacted" && (
+                        <button
+                          onClick={() => updateStatus(lead.id, "contacted")}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-emerald-700 hover:bg-emerald-50 transition"
+                        >
+                          <Icon name="check" className="w-3.5 h-3.5" /> Contactado
+                        </button>
+                      )}
+                      {lead.status !== "discarded" ? (
+                        <button
+                          onClick={() => updateStatus(lead.id, "discarded")}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-500 hover:bg-slate-100 transition"
+                        >
+                          <Icon name="archive" className="w-3.5 h-3.5" /> Descartar
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => updateStatus(lead.id, "new")}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition"
+                        >
+                          <Icon name="undo" className="w-3.5 h-3.5" /> Restaurar
+                        </button>
+                      )}
+                      {confirmDelete === lead.id ? (
+                        <button
+                          onClick={() => removeLead(lead.id)}
+                          onBlur={() => setConfirmDelete(null)}
+                          autoFocus
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 transition"
+                        >
+                          <Icon name="trash" className="w-3.5 h-3.5" /> ¿Eliminar?
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDelete(lead.id)}
+                          title="Eliminar"
+                          className="p-2 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                        >
+                          <Icon name="trash" className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Custom prompt */}
+                  {showPromptFor === lead.id && (
+                    <div className="mt-3 bg-violet-50/60 rounded-xl p-4 border border-violet-100">
+                      <label className="text-sm font-medium text-slate-700">Instrucciones para la IA</label>
+                      <p className="text-xs text-slate-500 mb-2">Ej: &quot;enfócate en reservas online&quot;, &quot;tono más directo&quot;</p>
+                      <textarea
+                        value={customPrompt}
+                        onChange={(e) => setCustomPrompt(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && customPrompt.trim()) handleGenerateEmail(lead, customPrompt);
+                        }}
+                        placeholder="Escribe tus instrucciones..."
+                        className={`${inputCls} resize-none`}
+                        rows={2}
+                        autoFocus
+                      />
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() => handleGenerateEmail(lead, customPrompt)}
+                          disabled={!customPrompt.trim() || generatingEmail}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 disabled:opacity-40 transition"
+                        >
+                          <Icon name="sparkles" className="w-3.5 h-3.5" /> Generar
+                        </button>
+                        <button
+                          onClick={() => { setShowPromptFor(null); setCustomPrompt(""); }}
+                          className="px-4 py-2 text-slate-600 rounded-lg text-sm hover:bg-white transition"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
                     </div>
                   )}
 
-                  {/* Tech badges */}
-                  <div className="flex gap-2 text-xs">
-                    <span className={`px-2.5 py-1 rounded-full ${lead.hasSSL ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"}`}>
-                      {lead.hasSSL ? "SSL" : "No SSL"}
-                    </span>
-                    <span className={`px-2.5 py-1 rounded-full ${lead.hasViewport ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"}`}>
-                      {lead.hasViewport ? "Mobile OK" : "No Mobile"}
-                    </span>
-                    <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-500">
-                      {lead.loadTime}ms
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex flex-col gap-2 flex-shrink-0">
-                  {lead.email && (() => {
-                    const draft = showEmail === lead.id && emailContent ? emailContent : lead.emailDraft;
-                    if (!draft) return null;
-                    const subjectMatch = draft.match(/^(?:Betreff|Asunto|Subject|Objet|Oggetto):\s*(.+)$/mi);
-                    const subject = subjectMatch ? subjectMatch[1].trim() : "Ihre Webseite";
-                    const body = subjectMatch ? draft.replace(subjectMatch[0], "").trim() : draft;
-                    return (
-                      <a
-                        href={`mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`}
-                        className="px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition text-center shadow-sm"
-                      >
-                        Enviar Email
-                      </a>
-                    );
-                  })()}
-                  <button
-                    onClick={() => handleGenerateEmail(lead)}
-                    className="px-4 py-2 bg-violet-100 text-violet-700 rounded-xl text-sm font-medium hover:bg-violet-200 transition"
-                  >
-                    Regenerar
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowPromptFor(showPromptFor === lead.id ? null : lead.id);
-                      setCustomPrompt("");
-                    }}
-                    className="px-4 py-2 bg-violet-50 text-violet-600 rounded-xl text-sm hover:bg-violet-100 transition"
-                  >
-                    Personalizar
-                  </button>
-                  {lead.status !== "contacted" && (
-                    <button
-                      onClick={() => updateStatus(lead.id, "contacted")}
-                      className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-xl text-sm font-medium hover:bg-emerald-200 transition"
-                    >
-                      Contactado
-                    </button>
-                  )}
-                  {lead.status !== "discarded" && (
-                    <button
-                      onClick={() => updateStatus(lead.id, "discarded")}
-                      className="px-4 py-2 bg-slate-100 text-slate-500 rounded-xl text-sm hover:bg-slate-200 transition"
-                    >
-                      Descartar
-                    </button>
-                  )}
-                  <button
-                    onClick={() => removeLead(lead.id)}
-                    className="px-4 py-2 text-red-400 rounded-xl text-sm hover:bg-red-50 hover:text-red-600 transition"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-
-              {/* Custom prompt input */}
-              {showPromptFor === lead.id && (
-                <div className="mt-5 bg-violet-50 rounded-xl p-5 border border-violet-200">
-                  <p className="text-sm text-slate-600 mb-3">
-                    Instrucciones para GPT (ej: &quot;enfocate en que necesitan reservas online&quot;, &quot;tono mas directo&quot;)
-                  </p>
-                  <textarea
-                    value={customPrompt}
-                    onChange={(e) => setCustomPrompt(e.target.value)}
-                    placeholder="Escribe tus instrucciones..."
-                    className="w-full bg-white text-slate-800 text-sm rounded-xl p-4 mb-3 focus:outline-none focus:ring-2 focus:ring-violet-500 border border-violet-200 resize-none"
-                    rows={2}
-                  />
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleGenerateEmail(lead, customPrompt)}
-                      disabled={!customPrompt.trim() || generatingEmail}
-                      className="px-5 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-medium hover:bg-violet-700 disabled:opacity-40 transition"
-                    >
-                      Generar
-                    </button>
-                    <button
-                      onClick={() => { setShowPromptFor(null); setCustomPrompt(""); }}
-                      className="px-5 py-2.5 bg-slate-200 text-slate-600 rounded-xl text-sm hover:bg-slate-300 transition"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Email Draft - collapsed by default */}
-              {lead.emailDraft && (
-                <div className="mt-4">
-                  <button
-                    onClick={() => setExpandedEmail(expandedEmail === lead.id ? null : lead.id)}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition border ${
-                      expandedEmail === lead.id
-                        ? "bg-violet-100 text-violet-700 border-violet-300"
-                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
-                    }`}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                    </svg>
-                    {expandedEmail === lead.id ? "Ocultar email" : "Ver email borrador"}
-                    <svg className={`w-4 h-4 transition-transform ${expandedEmail === lead.id ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {expandedEmail === lead.id && (
-                    <div className="mt-3 bg-slate-50 rounded-xl p-5 border border-slate-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-semibold text-slate-700">
-                          Email borrador
-                        </h4>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-slate-400">Traducir:</span>
-                          {[
-                            { code: "de", label: "DE" },
-                            { code: "es", label: "ES" },
-                            { code: "en", label: "EN" },
-                            { code: "fr", label: "FR" },
-                            { code: "it", label: "IT" },
-                          ].map((lang) => (
-                            <button
-                              key={lang.code}
-                              onClick={() => handleTranslate(lead, lang.code)}
-                              disabled={translating === lead.id}
-                              className="px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-100 rounded-lg text-xs text-slate-600 disabled:opacity-40 transition"
-                            >
-                              {lang.label}
-                            </button>
-                          ))}
+                  {/* Email draft */}
+                  {isOpen && (lead.emailDraft || busy) && (
+                    <div className="mt-3 rounded-xl border border-slate-200 overflow-hidden">
+                      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-slate-500 mr-1">Idioma</span>
+                          <div className="flex bg-white border border-slate-200 rounded-lg p-0.5">
+                            {LANGS.map((code) => (
+                              <button
+                                key={code}
+                                onClick={() => handleTranslate(lead, code)}
+                                disabled={busy}
+                                className="px-2 py-0.5 rounded-md text-xs font-medium uppercase text-slate-600 hover:bg-slate-100 disabled:opacity-40 transition"
+                              >
+                                {code}
+                              </button>
+                            ))}
+                          </div>
                         </div>
+                        <button
+                          onClick={() => copyDraft(lead.id, draft)}
+                          disabled={busy || !draft}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-slate-600 hover:bg-white disabled:opacity-40 transition"
+                        >
+                          <Icon name={copied === lead.id ? "check" : "copy"} className="w-3.5 h-3.5" />
+                          {copied === lead.id ? "Copiado" : "Copiar"}
+                        </button>
                       </div>
-                      {(generatingEmail && showEmail === lead.id) || (translating === lead.id) ? (
-                        <div className="flex items-center gap-3 py-4">
-                          <div className="w-4 h-4 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
-                          <p className="text-slate-500 text-sm">
-                            {translating === lead.id ? "Traduciendo..." : "Regenerando con GPT-4..."}
-                          </p>
+                      {busy ? (
+                        <div className="flex items-center gap-3 px-4 py-6 text-sm text-slate-500">
+                          <Spinner className="w-4 h-4 text-indigo-500" />
+                          {translating === lead.id ? "Traduciendo..." : "Generando email con IA..."}
                         </div>
                       ) : (
-                        <pre className="text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed">
-                          {showEmail === lead.id && emailContent ? emailContent : lead.emailDraft}
+                        <pre className="px-4 py-4 text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed bg-white">
+                          {draft}
                         </pre>
                       )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          ))}
+              </article>
+            );
+          })}
 
-          {filtered.length === 0 && (
-            <div className="text-center py-24">
-              <p className="text-2xl font-semibold text-slate-400 mb-2">No hay leads</p>
-              <p className="text-slate-400">Usa el boton &quot;Nueva busqueda&quot; para encontrar empresas</p>
+          {loaded && filtered.length === 0 && (
+            <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
+              <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 grid place-items-center mx-auto mb-4">
+                <Icon name="search" className="w-5 h-5" />
+              </div>
+              <p className="text-lg font-semibold text-slate-800">
+                {leads.length === 0 ? "Todavía no tienes leads" : "Ningún lead con estos filtros"}
+              </p>
+              <p className="text-sm text-slate-500 mt-1 mb-5">
+                {leads.length === 0 ? "Busca empresas por sector y ciudad, o añade una web directamente." : "Prueba a cambiar los filtros o la pestaña."}
+              </p>
+              {leads.length === 0 ? (
+                <button
+                  onClick={() => setPanelOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition"
+                >
+                  <Icon name="plus" /> Buscar leads
+                </button>
+              ) : hasFilters ? (
+                <button
+                  onClick={() => { setSectorFilter(""); setCityFilter(""); setTextSearch(""); }}
+                  className="text-sm font-medium text-indigo-600 hover:underline"
+                >
+                  Limpiar filtros
+                </button>
+              ) : null}
             </div>
           )}
         </div>
       </div>
+
+      {/* Side panel: new leads */}
+      {panelOpen && (
+        <div className="fixed inset-0 z-40">
+          <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-[2px]" onClick={() => setPanelOpen(false)} />
+          <aside className="absolute right-0 top-0 h-full w-full max-w-xl bg-white shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between px-5 h-16 border-b border-slate-200 flex-shrink-0">
+              <h2 className="text-base font-semibold">Nuevos leads</h2>
+              <button onClick={() => setPanelOpen(false)} className="p-2 rounded-lg text-slate-500 hover:bg-slate-100" aria-label="Cerrar">
+                <Icon name="x" className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="px-5 pt-4 flex-shrink-0">
+              <div className="flex bg-slate-100 rounded-lg p-1">
+                {([["search", "Buscar por zona"], ["direct", "Añadir una web"]] as const).map(([k, label]) => (
+                  <button
+                    key={k}
+                    onClick={() => setPanelTab(k)}
+                    className={`flex-1 py-2 rounded-md text-sm font-medium transition ${panelTab === k ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-800"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {panelTab === "search" ? (
+              <form onSubmit={handleSearch} className="flex-1 flex flex-col min-h-0">
+                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
+                  {/* Quick combos */}
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-2">Búsquedas rápidas</p>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {QUICK_COMBOS.map(([s, c]) => (
+                        <button
+                          key={`${s}-${c}`}
+                          type="button"
+                          onClick={() => selectSearch(s, c)}
+                          className="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 px-3 py-1.5 rounded-full text-slate-600 transition"
+                        >
+                          {cap(s)} · {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {([
+                    { key: "sectors" as const, title: "1. Sectores", all: SECTORS, q: sectorQuery, setQ: setSectorQuery, fmt: cap },
+                    { key: "cities" as const, title: "2. Ciudades", all: CITIES, q: cityQuery, setQ: setCityQuery, fmt: (x: string) => x },
+                  ]).map(({ key, title, all, q, setQ, fmt }) => {
+                    const selected = search[key];
+                    const visible = all.filter((x) => x.toLowerCase().includes(q.toLowerCase()));
+                    return (
+                      <div key={key}>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm font-semibold text-slate-800">
+                            {title}
+                            {selected.length > 0 && (
+                              <span className="ml-2 text-xs font-medium bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{selected.length}</span>
+                            )}
+                          </p>
+                          <div className="flex gap-3 text-xs font-medium">
+                            <button type="button" onClick={() => setSearch({ ...search, [key]: [...all] })} className="text-indigo-600 hover:text-indigo-800">Todos</button>
+                            <button type="button" onClick={() => setSearch({ ...search, [key]: [] })} className="text-slate-400 hover:text-slate-600">Ninguno</button>
+                          </div>
+                        </div>
+                        <div className="relative mb-2">
+                          <Icon name="search" className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input
+                            value={q}
+                            onChange={(e) => setQ(e.target.value)}
+                            placeholder="Filtrar..."
+                            className={`${inputCls} pl-8 py-1.5`}
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                          {visible.map((x) => {
+                            const on = selected.includes(x);
+                            return (
+                              <button
+                                key={x}
+                                type="button"
+                                onClick={() => toggle(key, x)}
+                                className={`inline-flex items-center gap-1 text-sm px-3 py-1.5 rounded-full border transition ${
+                                  on ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                                }`}
+                              >
+                                {on && <Icon name="check" className="w-3 h-3" />}
+                                {fmt(x)}
+                              </button>
+                            );
+                          })}
+                          {visible.length === 0 && <p className="text-sm text-slate-400">Sin resultados</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="border-t border-slate-200 px-5 py-4 flex-shrink-0 bg-white">
+                  {searching ? (
+                    <div>
+                      <div className="flex items-center justify-between text-sm mb-2">
+                        <span className="flex items-center gap-2 text-slate-700 font-medium">
+                          <Spinner className="w-3.5 h-3.5 text-indigo-600" />
+                          {searchProgress.label}
+                        </span>
+                        <span className="text-slate-500">{searchProgress.done + 1}/{searchProgress.total}</span>
+                      </div>
+                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-indigo-600 rounded-full transition-all duration-500" style={{ width: `${Math.max(progressPct, 4)}%` }} />
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2">Buscando en local.ch y DuckDuckGo, analizando webs y generando emails. Puedes cerrar este panel.</p>
+                    </div>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={combos === 0}
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm"
+                    >
+                      <Icon name="search" />
+                      {combos === 0
+                        ? "Elige al menos un sector y una ciudad"
+                        : `Buscar ${combos} ${combos === 1 ? "combinación" : "combinaciones"}`}
+                    </button>
+                  )}
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleDirectAdd} className="flex-1 flex flex-col min-h-0">
+                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+                  <p className="text-sm text-slate-500">
+                    Introduce una web para analizarla (SSL, mobile, velocidad, SEO) y generar un email personalizado.
+                  </p>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 mb-1.5 block">Nombre del negocio</label>
+                    <input
+                      type="text"
+                      value={directAdd.name}
+                      onChange={(e) => setDirectAdd({ ...directAdd, name: e.target.value })}
+                      placeholder="Ej: Restaurant Löwen"
+                      className={inputCls}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 mb-1.5 block">Web</label>
+                    <input
+                      type="text"
+                      value={directAdd.url}
+                      onChange={(e) => setDirectAdd({ ...directAdd, url: e.target.value })}
+                      placeholder="Ej: www.restaurant-loewen.ch"
+                      className={inputCls}
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 mb-1.5 block">Sector <span className="text-slate-400 font-normal">(opcional)</span></label>
+                      <select value={directAdd.sector} onChange={(e) => setDirectAdd({ ...directAdd, sector: e.target.value })} className={inputCls}>
+                        <option value="">Seleccionar...</option>
+                        {SECTORS.map((s) => <option key={s} value={s}>{cap(s)}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 mb-1.5 block">Ciudad <span className="text-slate-400 font-normal">(opcional)</span></label>
+                      <select value={directAdd.city} onChange={(e) => setDirectAdd({ ...directAdd, city: e.target.value })} className={inputCls}>
+                        <option value="">Seleccionar...</option>
+                        {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div className="border-t border-slate-200 px-5 py-4 flex-shrink-0">
+                  <button
+                    type="submit"
+                    disabled={addingDirect || (!directAdd.name && !directAdd.url)}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold text-sm disabled:opacity-40 transition shadow-sm"
+                  >
+                    {addingDirect ? <><Spinner className="w-4 h-4" /> Analizando web...</> : <><Icon name="sparkles" /> Analizar y generar email</>}
+                  </button>
+                </div>
+              </form>
+            )}
+          </aside>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 w-full max-w-md">
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium text-white ${toast.kind === "ok" ? "bg-slate-900" : "bg-rose-600"}`}>
+            <Icon name={toast.kind === "ok" ? "check" : "x"} className="w-4 h-4 flex-shrink-0" />
+            <span className="flex-1">{toast.text}</span>
+            <button onClick={() => setToast(null)} className="opacity-70 hover:opacity-100" aria-label="Cerrar">
+              <Icon name="x" className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

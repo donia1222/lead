@@ -34,6 +34,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
       <div className="bg-white rounded-2xl p-8 w-full max-w-sm border border-slate-200 shadow-sm">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white grid place-items-center font-bold text-xl shadow-sm mx-auto mb-4">L</div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2 text-center">
           Lead Prospector
         </h1>
@@ -47,7 +48,7 @@ export default function LoginPage() {
             placeholder="Code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="w-full bg-slate-50 text-slate-900 px-4 py-3 rounded-lg text-center text-lg tracking-widest border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full bg-slate-50 text-slate-900 px-4 py-3 rounded-lg text-center text-lg tracking-widest border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             autoFocus
             required
           />
@@ -59,7 +60,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 transition-colors"
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium disabled:opacity-50 transition-colors"
           >
             {loading ? "..." : "Zugang"}
           </button>

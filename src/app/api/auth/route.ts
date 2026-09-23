@@ -22,3 +22,9 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: false, error: "Falscher Code" }, { status: 401 });
 }
+
+export async function DELETE() {
+  const response = NextResponse.json({ ok: true });
+  response.cookies.delete("lead-auth");
+  return response;
+}
