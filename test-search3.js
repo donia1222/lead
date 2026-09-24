@@ -1,6 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+
 async function testDuckDuckGo() {
   console.log('=== DuckDuckGo ===');
   const url = 'https://html.duckduckgo.com/html/?q=restaurant+Buchs+SG+website';
