@@ -45,7 +45,7 @@ export default function NuevosPage() {
   const [refrescando, setRefrescando] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [filtro, setFiltro] = useState<Filtro>("sinweb");
-  const [dias, setDias] = useState(14);
+  const [dias, setDias] = useState(30);
   const [minutos, setMinutos] = useState(15);
   const [cantones, setCantones] = useState<string[]>(["SG"]);
 
