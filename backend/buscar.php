@@ -41,7 +41,10 @@ function traer(string $url, int $segundos = 12): array {
 }
 
 const DIRECTORIOS = ['local.ch','localsearch.ch','search.ch','google','facebook.com','instagram.com','linkedin.com',
-  'twitter.com','x.com','tripadvisor','yelp.com','youtube.com','wikipedia.org','renovero.ch','localcities.ch'];
+  'twitter.com','x.com','tripadvisor','yelp.com','youtube.com','wikipedia.org','renovero.ch','localcities.ch',
+  // Sellos y botones que llevan muchas fichas y no son la web de nadie.
+  'swissmadesoftware','trustpilot','provenexpert','ekomi','wa.me','api.whatsapp','t.me',
+  'apple.com','play.google','maps.google','goo.gl','tiktok.com','pinterest.','xing.com'];
 // Trastos de la propia pagina que no son la web de nadie: banner de cookies,
 // tipografias, mapas... Sin esta lista, la «web del negocio» acaba siendo
 // cdn.cookielaw.org, que es lo primero que aparece en el HTML.

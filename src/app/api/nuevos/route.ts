@@ -1,38 +1,55 @@
 import { NextRequest, NextResponse } from "next/server";
-import { buscarAltas } from "@/lib/shab";
-import { buscarWeb } from "@/lib/search";
+import { BASE, credencial } from "@/lib/almacen";
 import { actualizarNuevo, fusionar, getNuevos } from "@/lib/nuevos-store";
+import { Nuevo } from "@/lib/types";
 
-export const maxDuration = 300;
+export const maxDuration = 120;
 
+/**
+ * El trabajo lo hace nuevos.php en el hosting: el boletin oficial, situar cada
+ * direccion, los minutos en coche y mirar si tiene web. Aqui solo se junta con
+ * lo que ya habia guardado, sin pisar notas ni visitas.
+ */
 export async function GET() {
   return NextResponse.json({ nuevos: await getNuevos() });
 }
 
-/** Refrescar: traer altas del boletin y mirar a cuales no se les ve web. */
 export async function POST(req: NextRequest) {
   const { dias, minutos, cantones } = await req.json().catch(() => ({}));
 
-  const altas = await buscarAltas({
-    dias: Number(dias) || 14,
-    minutos: Number(minutos) || 15,
-    cantones: Array.isArray(cantones) && cantones.length ? cantones : ["SG"],
-  });
+  const codigo = credencial();
+  if (!codigo) return NextResponse.json({ error: "Sin sesion" }, { status: 401 });
 
-  const recien = await fusionar(altas);
-  console.log(`[NUEVOS] ${altas.length} cerca, ${recien.length} que no tenias`);
+  const actuales = await getNuevos();
 
-  // Solo se busca web de los recien llegados: los de antes ya se miraron.
-  for (const n of recien) {
-    const { web, email, telefono } = await buscarWeb(n.nombre, n.localidad);
-    await actualizarNuevo(n.id, { web, email, telefono, webComprobada: true });
-    await new Promise((r) => setTimeout(r, 800));
+  let datos: { nuevos?: Nuevo[]; error?: string; enElBoletin?: number };
+  try {
+    const r = await fetch(`${BASE}/nuevos.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Lead-Codigo": codigo },
+      body: JSON.stringify({
+        dias: Number(dias) || 14,
+        minutos: Number(minutos) || 15,
+        cantones: Array.isArray(cantones) && cantones.length ? cantones : ["SG"],
+        // Los que ya tiene: el servidor ni los mira, y asi va mucho mas rapido.
+        yaTengo: actuales.map((n) => n.id),
+      }),
+      cache: "no-store",
+    });
+    datos = await r.json();
+    if (!r.ok) return NextResponse.json({ error: datos?.error || `El servidor contesto ${r.status}` }, { status: 502 });
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Sin conexion" }, { status: 502 });
   }
+
+  const recien = await fusionar(datos.nuevos || []);
 
   return NextResponse.json({
     nuevos: await getNuevos(),
     recien: recien.length,
-    mensaje: `${altas.length} altas cerca · ${recien.length} nuevas para ti`,
+    mensaje: recien.length
+      ? `${recien.length} negocios nuevos para ti`
+      : "Ninguno nuevo desde la última vez",
   });
 }
 
