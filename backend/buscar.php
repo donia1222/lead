@@ -11,6 +11,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') exit;
 @set_time_limit(180);
 
 
+
 function fin(array $d, int $codigo = 200): never {
   http_response_code($codigo);
   echo json_encode($d, JSON_UNESCAPED_UNICODE);
