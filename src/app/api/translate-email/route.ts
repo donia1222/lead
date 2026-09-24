@@ -1,48 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { BASE, credencial } from "@/lib/almacen";
 import { updateLead } from "@/lib/leads-store";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+export const maxDuration = 60;
 
-const LANG_NAMES: Record<string, string> = {
-  de: "Deutsch (Schweizer Hochdeutsch, ss statt ß)",
-  es: "Español",
-  en: "English",
-  it: "Italiano",
-  fr: "Français",
-};
-
+/** Traducir el borrador, tambien en el hosting. */
 export async function POST(req: NextRequest) {
   const { id, email, lang } = await req.json();
+  if (!email || !lang) return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
 
-  if (!email || !lang) {
-    return NextResponse.json({ error: "Faltan datos" }, { status: 400 });
-  }
-
-  const langName = LANG_NAMES[lang] || lang;
+  const codigo = credencial();
+  if (!codigo) return NextResponse.json({ error: "Sin sesion" }, { status: 401 });
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4.1",
-      messages: [
-        {
-          role: "system",
-          content: `Traduce el siguiente email a ${langName}. Mantén el mismo tono cercano, cálido y informal. Mantén la firma exactamente igual (nombre, empresa, teléfono, email, URL, ciudad). No añadas ni quites contenido, solo traduce.`,
-        },
-        { role: "user", content: email },
-      ],
-      temperature: 0.3,
+    const r = await fetch(`${BASE}/email.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Lead-Codigo": codigo },
+      body: JSON.stringify({ accion: "traducir", email, idioma: lang }),
+      cache: "no-store",
     });
-
-    const translated = response.choices[0].message.content || "";
-
-    if (id) {
-      await updateLead(id, { emailDraft: translated });
-    }
-
-    return NextResponse.json({ email: translated });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Error desconocido";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const d = await r.json();
+    if (!r.ok) return NextResponse.json({ error: d?.error || `El servidor contesto ${r.status}` }, { status: 502 });
+    if (id) await updateLead(id, { emailDraft: d.email });
+    return NextResponse.json({ email: d.email });
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Sin conexion" }, { status: 502 });
   }
 }

@@ -258,6 +258,25 @@ if ($dado === '' || !hash_equals($CODIGO, $dado)) fin(['error' => 'No autorizado
 $p = json_decode((string) file_get_contents('php://input'), true);
 if (!is_array($p)) fin(['error' => 'Cuerpo invalido'], 400);
 
+// Analizar una sola web (el panel lo usa para añadir un negocio a mano).
+if (!empty($p['url'])) {
+  $url = (string) $p['url'];
+  $nombre = trim((string) ($p['nombre'] ?? '')) ?: dominio($url);
+  $sector = trim((string) ($p['sector'] ?? ''));
+  $ciudad = trim((string) ($p['ciudad'] ?? ''));
+  $a = analizarWeb($url);
+  fin(['lead' => [
+    'id' => bin2hex(random_bytes(8)),
+    'name' => $nombre, 'sector' => $sector, 'city' => $ciudad, 'url' => $url,
+    'email' => $a['emails'][0] ?? '', 'phone' => $a['telefonos'][0] ?? '',
+    'contactPage' => $a['contacto'],
+    'hasSSL' => $a['ssl'], 'hasViewport' => $a['movil'], 'loadTime' => $a['ms'],
+    'score' => puntuacion($a), 'problems' => $a['problemas'], 'status' => 'new',
+    'emailDraft' => ($a['emails'][0] ?? '') !== '' ? redactarEmail($CLAVE_OPENAI, $nombre, $ciudad, $sector, $a['problemas']) : '',
+    'createdAt' => date('c'),
+  ]]);
+}
+
 $sector = trim((string) ($p['sector'] ?? ''));
 $ciudad = trim((string) ($p['ciudad'] ?? ''));
 $que = $sector !== '' ? $sector : trim((string) ($p['que'] ?? ''));
