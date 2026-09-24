@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import axios from "axios";
 import { promises as fs } from "fs";
 import path from "path";
-import { enServidor, leer } from "@/lib/almacen";
+import { enElHosting, leer } from "@/lib/almacen";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -57,7 +57,7 @@ export async function GET() {
 
   // El almacen: ¿esta puesto el endpoint del hosting y contesta?
   let almacen: { donde: string; ok: boolean; leads?: number; fallo?: string };
-  if (enServidor) {
+  if (enElHosting()) {
     try {
       const filas = await leer<{ id: string }>("leads");
       almacen = { donde: "endpoint del hosting", ok: true, leads: filas.length };
@@ -65,7 +65,7 @@ export async function GET() {
       almacen = { donde: "endpoint del hosting", ok: false, fallo: e instanceof Error ? e.message : String(e) };
     }
   } else {
-    almacen = { donde: "fichero local (no sirve en Vercel)", ok: !process.env.VERCEL };
+    almacen = { donde: "sin codigo de sesion: usaria el fichero local", ok: !process.env.VERCEL };
   }
 
   return NextResponse.json({

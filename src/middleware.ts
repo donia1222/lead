@@ -1,30 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
+/**
+ * Aqui ya no se compara con ninguna variable de entorno: quien valida el codigo
+ * es el servidor de Roberto (lead.php). Esto solo mira que haya sesion; si la
+ * cookie lleva un codigo malo, el PHP contestara 401 y se vuelve a entrar.
+ */
 export function middleware(req: NextRequest) {
-  const accessCode = process.env.ACCESS_CODE;
+  if (req.nextUrl.pathname.startsWith("/api/auth")) return NextResponse.next();
 
-  // No protection if no code is set
-  if (!accessCode) return NextResponse.next();
+  const sesion = req.cookies.get("lead-auth")?.value;
+  if (sesion) return NextResponse.next();
 
-  // Allow auth API
-  if (req.nextUrl.pathname.startsWith("/api/auth")) {
-    return NextResponse.next();
-  }
-
-  // Check cookie
-  const cookie = req.cookies.get("lead-auth");
-  if (cookie?.value === accessCode) {
-    return NextResponse.next();
-  }
-
-  // For API routes, return 401
   if (req.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-
-  // For pages, redirect to login
-  const loginUrl = new URL("/login", req.url);
-  return NextResponse.redirect(loginUrl);
+  return NextResponse.redirect(new URL("/login", req.url));
 }
 
 export const config = {

@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { cookies } from "next/headers";
 
 /**
  * Donde se guardan los leads y los negocios nuevos.
@@ -11,9 +12,29 @@ import path from "path";
  * ven exactamente los mismos datos.
  */
 
-const API = process.env.LEAD_API_URL || "";
-const TOKEN = process.env.LEAD_API_TOKEN || "";
-export const enServidor = Boolean(API && TOKEN);
+/** Donde vive el backend. No es secreto, asi que va escrito aqui. */
+export const BASE = process.env.LEAD_API_URL || "https://web.lweb.ch/lead/phps";
+const API = `${BASE}/lead.php`;
+
+/**
+ * La credencial. En el servidor de Vercel no hay variables de entorno a
+ * proposito: se usa el mismo codigo que escribes al entrar, que viaja en la
+ * cookie de la sesion. En el Mac se puede poner LEAD_API_TOKEN y listo.
+ */
+export function credencial(): string {
+  const env = process.env.LEAD_API_TOKEN;
+  if (env) return env;
+  try {
+    return cookies().get("lead-auth")?.value || "";
+  } catch {
+    return "";
+  }
+}
+
+/** Si no hay credencial no se puede hablar con el hosting: se usa el fichero. */
+export function enElHosting(): boolean {
+  return Boolean(credencial());
+}
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -27,7 +48,7 @@ export function enFila<T>(fn: () => Promise<T>): Promise<T> {
 async function pedir(camino: string, opciones: RequestInit = {}) {
   const r = await fetch(API + camino, {
     ...opciones,
-    headers: { "Content-Type": "application/json", "X-Lead-Token": TOKEN, ...(opciones.headers || {}) },
+    headers: { "Content-Type": "application/json", "X-Lead-Codigo": credencial(), ...(opciones.headers || {}) },
     cache: "no-store",
   });
   const d = await r.json().catch(() => ({}));
@@ -40,7 +61,7 @@ function fichero(coleccion: string) {
 }
 
 export async function leer<T>(coleccion: string): Promise<T[]> {
-  if (enServidor) {
+  if (enElHosting()) {
     const d = await pedir(`?coleccion=${encodeURIComponent(coleccion)}`);
     return (d.filas || []) as T[];
   }
@@ -55,7 +76,7 @@ export async function leer<T>(coleccion: string): Promise<T[]> {
 
 /** Guarda la lista entera. En el servidor se manda en un solo viaje. */
 export async function escribir<T extends { id: string }>(coleccion: string, filas: T[]) {
-  if (enServidor) {
+  if (enElHosting()) {
     await pedir("?accion=lote", {
       method: "POST",
       body: JSON.stringify({ coleccion, filas: filas.map((f) => ({ id: f.id, datos: f })) }),
@@ -70,7 +91,7 @@ export async function escribir<T extends { id: string }>(coleccion: string, fila
 
 /** Guarda una sola fila (en el servidor no hace falta reescribir el resto). */
 export async function guardarUna<T extends { id: string }>(coleccion: string, fila: T, todas: T[]) {
-  if (enServidor) {
+  if (enElHosting()) {
     await pedir("", { method: "POST", body: JSON.stringify({ coleccion, id: fila.id, datos: fila }) });
     return;
   }
@@ -78,7 +99,7 @@ export async function guardarUna<T extends { id: string }>(coleccion: string, fi
 }
 
 export async function borrarUna<T extends { id: string }>(coleccion: string, id: string, todas: T[]) {
-  if (enServidor) {
+  if (enElHosting()) {
     await pedir("?accion=borrar", { method: "POST", body: JSON.stringify({ coleccion, id }) });
     return;
   }
