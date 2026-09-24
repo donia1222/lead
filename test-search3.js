@@ -11,6 +11,7 @@ async function testDuckDuckGo() {
     },
   });
   const $ = cheerio.load(res.data);
+   
 
   $('.result').each((i, el) => {
     const title = $(el).find('.result__title a').text().trim();
