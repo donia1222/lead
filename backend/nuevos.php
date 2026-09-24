@@ -192,6 +192,12 @@ $cantones = array_values(array_filter(array_map(
 if (!$cantones) $cantones = ['SG'];
 // Los que ya tiene guardados: de esos no hace falta volver a averiguar nada.
 $yaTengo = array_flip(array_map('strval', (array) ($p['yaTengo'] ?? [])));
+// Por tandas: cada llamada trabaja un rato corto y dice cuantos quedan. Asi da
+// igual el limite de tiempo del hosting o el de Vercel, que no son el mismo.
+$tope = max(1, min(20, (int) ($p['tope'] ?? 5)));
+$segundosTope = 20;
+$empezado = microtime(true);
+$pendientes = 0;
 
 $params = [
   'publicationStates' => 'PUBLISHED', 'subRubrics' => 'HR01',
@@ -220,6 +226,13 @@ foreach ($lista as $pub) {
 
   // Si ya lo tiene, no se gasta ni una peticion en el.
   if (isset($yaTengo[$id])) continue;
+
+  // Si ya se ha trabajado bastante en esta tanda, se cuentan los que faltan y
+  // se deja para la siguiente llamada.
+  if (count($nuevos) >= $tope || microtime(true) - $empezado > $segundosTope) {
+    $pendientes++;
+    continue;
+  }
 
   $puntoPueblo = situarPueblo($localidad, $cantones[0]);
   if (!$puntoPueblo) continue;
@@ -264,4 +277,12 @@ foreach ($lista as $pub) {
 }
 
 usort($nuevos, fn($a, $b) => strcmp($b['fecha'], $a['fecha']));
-fin(['nuevos' => $nuevos, 'enElBoletin' => count($lista), 'cerca' => $mirados]);
+fin([
+  'nuevos' => $nuevos,
+  'enElBoletin' => count($lista),
+  'cerca' => $mirados,
+  // Cuantos quedan por mirar. Mientras esto sea mayor que cero, hay que volver
+  // a llamar (mandando tambien los recien traidos en «yaTengo»).
+  'pendientes' => $pendientes,
+  'segundos' => round(microtime(true) - $empezado, 1),
+]);

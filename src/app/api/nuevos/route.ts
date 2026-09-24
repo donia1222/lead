@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   const actuales = await getNuevos();
 
-  let datos: { nuevos?: Nuevo[]; error?: string; enElBoletin?: number };
+  let datos: { nuevos?: Nuevo[]; error?: string; enElBoletin?: number; pendientes?: number; segundos?: number };
   try {
     const r = await fetch(`${BASE}/nuevos.php`, {
       method: "POST",
@@ -43,13 +43,17 @@ export async function POST(req: NextRequest) {
   }
 
   const recien = await fusionar(datos.nuevos || []);
+  const pendientes = Number(datos.pendientes || 0);
 
   return NextResponse.json({
     nuevos: await getNuevos(),
     recien: recien.length,
-    mensaje: recien.length
-      ? `${recien.length} negocios nuevos para ti`
-      : "Ninguno nuevo desde la última vez",
+    pendientes,
+    mensaje: pendientes
+      ? `${recien.length} traídos · quedan ${pendientes} por mirar…`
+      : recien.length
+        ? `${recien.length} negocios nuevos para ti`
+        : "Ninguno nuevo desde la última vez",
   });
 }
 

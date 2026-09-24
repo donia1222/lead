@@ -60,20 +60,29 @@ export default function NuevosPage() {
     cargar();
   }, [cargar]);
 
+  /**
+   * El servidor trabaja por tandas cortas y dice cuantos le quedan: se le vuelve
+   * a llamar hasta que no queda ninguno. Asi no hay llamada larga que pueda
+   * cortarse por tiempo, y se van viendo los resultados segun llegan.
+   */
   async function refrescar() {
     setRefrescando(true);
     setMensaje("");
     try {
-      const res = await fetch("/api/nuevos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dias, minutos, cantones }),
-      });
-      const data = await res.json();
-      setNuevos(data.nuevos || []);
-      setMensaje(data.mensaje || "");
-    } catch {
-      setMensaje("No se pudo consultar el boletín");
+      for (let vuelta = 0; vuelta < 12; vuelta++) {
+        const res = await fetch("/api/nuevos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dias, minutos, cantones }),
+        });
+        const data = await res.json();
+        if (data.error) { setMensaje(data.error); break; }
+        setNuevos(data.nuevos || []);
+        setMensaje(data.mensaje || "");
+        if (!data.pendientes) break;
+      }
+    } catch (e) {
+      setMensaje(e instanceof Error ? e.message : "No se pudo consultar el boletín");
     }
     setRefrescando(false);
   }
