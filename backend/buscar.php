@@ -129,8 +129,8 @@ function analizarWeb(string $url): array {
 
   [$html, $codigo, $ms] = traer($url, 14);
   if ($html === '') {
-    return ['ok' => false, 'problemas' => ['La web no responde'], 'ssl' => $conSSL, 'movil' => false,
-            'ms' => $ms, 'emails' => [], 'telefonos' => [], 'contacto' => ''];
+    return ['ok' => false, 'problemas' => ['Die Webseite antwortet nicht'], 'ssl' => $conSSL, 'movil' => false,
+            'ms' => $ms, 'emails' => [], 'telefonos' => [], 'contacto' => '', 'resumen' => ''];
   }
 
   $movil = (bool) preg_match('#<meta[^>]+name=["\']viewport#i', $html);
@@ -180,8 +180,84 @@ function analizarWeb(string $url): array {
     $contacto = str_starts_with($mc[1], 'http') ? $mc[1] : rtrim($url, '/') . '/' . ltrim($mc[1], '/');
   }
 
-  return ['ok' => true, 'problemas' => $problemas, 'ssl' => $conSSL, 'movil' => $movil,
-          'ms' => $ms, 'emails' => $emails, 'telefonos' => $telefonos, 'contacto' => $contacto];
+  $datos = ['ok' => true, 'problemas' => $problemas, 'ssl' => $conSSL, 'movil' => $movil,
+            'ms' => $ms, 'emails' => $emails, 'telefonos' => $telefonos, 'contacto' => $contacto];
+  $datos['resumen'] = resumenDeLaWeb($html, $url, $datos);
+  return $datos;
+}
+
+/**
+ * Un resumen corto de la pagina para que GPT la pueda juzgar: lo que ve una
+ * persona al entrar, no la lista de detalles tecnicos.
+ */
+function resumenDeLaWeb(string $html, string $url, array $a): string {
+  $titulo = preg_match('#<title[^>]*>(.*?)</title>#si', $html, $m) ? trim(html_entity_decode(strip_tags($m[1]))) : '';
+  $desc = preg_match('#<meta[^>]+name=["\']description["\'][^>]+content=["\']([^"\']{0,300})#i', $html, $m) ? trim($m[1]) : '';
+  $texto = preg_replace('/\s+/', ' ', strip_tags(preg_replace('#<(script|style|nav|footer)\b.*?</\1>#si', ' ', $html)));
+  $anos = [];
+  if (preg_match_all('/(?:©|&copy;|Copyright)[^0-9]{0,12}(19|20)\d{2}/i', $html, $mm)) $anos = array_slice($mm[0], 0, 3);
+  $pistas = [];
+  if (preg_match('#wp-content|wordpress#i', $html)) $pistas[] = 'WordPress';
+  if (preg_match('#joomla#i', $html)) $pistas[] = 'Joomla';
+  if (preg_match('#<table[^>]*>.*<table#si', $html)) $pistas[] = 'maquetado con tablas';
+  if (preg_match('#\.swf|flash#i', $html)) $pistas[] = 'Flash';
+  if (preg_match('#jimdo|wix|squarespace|webnode|digitalone#i', $html)) $pistas[] = 'constructor de paginas';
+
+  return "URL: {$url}\n"
+    . 'Titulo: ' . mb_substr($titulo, 0, 120) . "\n"
+    . 'Descripcion: ' . mb_substr($desc, 0, 200) . "\n"
+    . 'HTTPS: ' . ($a['ssl'] ? 'si' : 'no') . ' · Movil: ' . ($a['movil'] ? 'si' : 'no') . ' · Carga: ' . $a['ms'] . " ms\n"
+    . ($anos ? 'Anos que aparecen: ' . implode(', ', $anos) . "\n" : '')
+    . ($pistas ? 'Pistas: ' . implode(', ', $pistas) . "\n" : '')
+    . "Texto visible (recortado):\n" . mb_substr($texto, 0, 1800);
+}
+
+/**
+ * Que GPT mire la pagina y diga cuanto necesita una renovacion, en vez de
+ * contar favicons. Devuelve nota de 0 a 100 y un par de motivos en aleman.
+ * Si algo falla, se devuelve null y arriba se usa la cuenta de siempre.
+ */
+function juzgarWeb(string $clave, string $resumen): ?array {
+  if ($clave === '') return null;
+  $instruccion = <<<'TXT'
+Du bist ein erfahrener Webdesigner in der Schweiz. Du bekommst die Zusammenfassung einer Firmenwebsite und beurteilst NUeCHTERN, wie dringend sie eine Erneuerung braucht.
+
+Antworte NUR mit JSON, ohne Text drumherum:
+{"nota": 0-100, "motivos": ["...", "..."], "resumen": "..."}
+
+nota: 0 = moderne, gepflegte Seite, kein Handlungsbedarf. 100 = wirkt stark veraltet oder fehlt praktisch.
+Orientierung: 0-25 gut, 26-50 kleinere Schwaechen, 51-75 deutlich veraltet, 76-100 dringend.
+motivos: 1 bis 2 kurze Gruende auf Deutsch, aus Kundensicht, ohne Fachjargon (z.B. "wirkt wie aus den 2010ern", "am Handy schwer zu lesen"). Wenn die Seite gut ist, schreibe ehrlich warum sie gut ist.
+resumen: ein Satz, was die Firma anbietet.
+
+Sei streng mit dir selbst: erfinde keine Maengel. Wenn die Seite ordentlich ist, gib eine niedrige nota.
+TXT;
+
+  $cuerpo = json_encode([
+    'model' => 'gpt-4.1',
+    'messages' => [
+      ['role' => 'system', 'content' => $instruccion],
+      ['role' => 'user', 'content' => $resumen],
+    ],
+    'temperature' => 0.2,
+    'response_format' => ['type' => 'json_object'],
+  ], JSON_UNESCAPED_UNICODE);
+
+  $c = curl_init('https://api.openai.com/v1/chat/completions');
+  curl_setopt_array($c, [
+    CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true, CURLOPT_POSTFIELDS => $cuerpo,
+    CURLOPT_TIMEOUT => 45,
+    CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Bearer ' . $clave],
+  ]);
+  $r = json_decode((string) curl_exec($c), true);
+  curl_close($c);
+  $d = json_decode((string) ($r['choices'][0]['message']['content'] ?? ''), true);
+  if (!is_array($d) || !isset($d['nota'])) return null;
+  return [
+    'nota' => max(0, min(100, (int) $d['nota'])),
+    'motivos' => array_slice(array_map('strval', (array) ($d['motivos'] ?? [])), 0, 2),
+    'resumen' => (string) ($d['resumen'] ?? ''),
+  ];
 }
 
 function puntuacion(array $a): int {
@@ -268,13 +344,16 @@ if (!empty($p['url'])) {
   $sector = trim((string) ($p['sector'] ?? ''));
   $ciudad = trim((string) ($p['ciudad'] ?? ''));
   $a = analizarWeb($url);
+  $juicio = $a['resumen'] !== '' ? juzgarWeb($CLAVE_OPENAI, $a['resumen']) : null;
   fin(['lead' => [
     'id' => bin2hex(random_bytes(8)),
     'name' => $nombre, 'sector' => $sector, 'city' => $ciudad, 'url' => $url,
     'email' => $a['emails'][0] ?? '', 'phone' => $a['telefonos'][0] ?? '',
     'contactPage' => $a['contacto'],
     'hasSSL' => $a['ssl'], 'hasViewport' => $a['movil'], 'loadTime' => $a['ms'],
-    'score' => puntuacion($a), 'problems' => $a['problemas'], 'status' => 'new',
+    'score' => $juicio ? $juicio['nota'] : puntuacion($a),
+    'problems' => ($juicio && $juicio['motivos']) ? $juicio['motivos'] : $a['problemas'],
+    'status' => 'new',
     'emailDraft' => ($a['emails'][0] ?? '') !== '' ? redactarEmail($CLAVE_OPENAI, $nombre, $ciudad, $sector, $a['problemas']) : '',
     'createdAt' => date('c'),
   ]]);
@@ -296,15 +375,20 @@ foreach ($encontrados as $n) {
 
   if ($n['url'] !== '') {
     $a = analizarWeb($n['url']);
-    $score = puntuacion($a);
-    $problemas = $a['problemas'];
+    // Que la juzgue GPT mirando la pagina; la cuenta de detalles tecnicos solo
+    // se usa si GPT no contesta.
+    $juicio = $a['resumen'] !== '' ? juzgarWeb($CLAVE_OPENAI, $a['resumen']) : null;
+    $score = $juicio ? $juicio['nota'] : puntuacion($a);
+    $problemas = ($juicio && $juicio['motivos']) ? $juicio['motivos'] : $a['problemas'];
     $email = $n['email'] ?: ($a['emails'][0] ?? '');
     $tel = $n['telefono'] ?: ($a['telefonos'][0] ?? '');
     $contacto = $a['contacto'];
     $ssl = $a['ssl']; $movil = $a['movil']; $ms = $a['ms'];
   } else {
-    $score = 70;
-    $problemas = ['Keine eigene Webseite vorhanden'];
+    // OJO: que local.ch no enlace una web NO significa que no la tengan. Se
+    // dice lo que sabemos —no la hemos encontrado— y que lo mire una persona.
+    $score = 50;
+    $problemas = ['Auf local.ch ist keine Webseite verlinkt — bitte kurz pruefen'];
     $email = $n['email']; $tel = $n['telefono']; $contacto = '';
     $ssl = false; $movil = false; $ms = 0;
   }
@@ -315,7 +399,8 @@ foreach ($encontrados as $n) {
     'url' => $n['url'], 'email' => $email, 'phone' => $tel, 'contactPage' => $contacto,
     'hasSSL' => $ssl, 'hasViewport' => $movil, 'loadTime' => $ms,
     'score' => $score, 'problems' => $problemas, 'status' => 'new',
-    'emailDraft' => $email !== '' ? redactarEmail($CLAVE_OPENAI, $n['nombre'], $ciudad, $sector, $problemas) : '',
+    // Sin web confirmada no se redacta nada: primero se mira, luego se escribe.
+    'emailDraft' => ($email !== '' && $n['url'] !== '') ? redactarEmail($CLAVE_OPENAI, $n['nombre'], $ciudad, $sector, $problemas) : '',
     'createdAt' => date('c'),
   ];
 }
