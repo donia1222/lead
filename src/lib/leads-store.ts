@@ -1,66 +1,46 @@
-import { promises as fs } from "fs";
-import path from "path";
 import { Lead } from "./types";
+import { borrarUna, enFila, escribir, guardarUna, leer } from "./almacen";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const LEADS_FILE = path.join(DATA_DIR, "leads.json");
+/**
+ * Los leads. Donde acaban guardados lo decide `almacen.ts`: el JSON del Mac o
+ * el endpoint del hosting, segun esten puestas LEAD_API_URL y LEAD_API_TOKEN.
+ */
 
-// Serialize writes so concurrent requests don't overwrite each other.
-let queue: Promise<unknown> = Promise.resolve();
-function withLock<T>(fn: () => Promise<T>): Promise<T> {
-  const run = queue.then(fn, fn);
-  queue = run.catch(() => {});
-  return run;
-}
-
-async function readLeads(): Promise<Lead[]> {
-  try {
-    const data = await fs.readFile(LEADS_FILE, "utf-8");
-    return data ? JSON.parse(data) : [];
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
-    throw err;
-  }
-}
-
-async function writeLeads(leads: Lead[]) {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  const tmp = `${LEADS_FILE}.tmp`;
-  await fs.writeFile(tmp, JSON.stringify(leads, null, 2));
-  await fs.rename(tmp, LEADS_FILE);
-}
+const COL = "leads";
 
 export async function getLeads(): Promise<Lead[]> {
-  return readLeads();
+  return leer<Lead>(COL);
 }
 
 export async function saveLead(lead: Lead) {
-  return withLock(async () => {
-    const leads = await readLeads();
-    const existing = leads.findIndex((l) => l.url === lead.url);
-    if (existing >= 0) {
-      leads[existing] = { ...leads[existing], ...lead };
-    } else {
-      leads.push(lead);
-    }
-    await writeLeads(leads);
+  return enFila(async () => {
+    const leads = await leer<Lead>(COL);
+    const i = leads.findIndex((l) => l.url === lead.url);
+    const fila = i >= 0 ? { ...leads[i], ...lead } : lead;
+    if (i >= 0) leads[i] = fila;
+    else leads.push(fila);
+    await guardarUna(COL, fila, leads);
   });
 }
 
-export async function updateLead(id: string, updates: Partial<Lead>) {
-  return withLock(async () => {
-    const leads = await readLeads();
-    const index = leads.findIndex((l) => l.id === id);
-    if (index >= 0) {
-      leads[index] = { ...leads[index], ...updates };
-      await writeLeads(leads);
-    }
+export async function updateLead(id: string, cambios: Partial<Lead>) {
+  return enFila(async () => {
+    const leads = await leer<Lead>(COL);
+    const i = leads.findIndex((l) => l.id === id);
+    if (i < 0) return;
+    leads[i] = { ...leads[i], ...cambios };
+    await guardarUna(COL, leads[i], leads);
   });
 }
 
 export async function deleteLead(id: string) {
-  return withLock(async () => {
-    const leads = await readLeads();
-    await writeLeads(leads.filter((l) => l.id !== id));
+  return enFila(async () => {
+    const leads = await leer<Lead>(COL);
+    await borrarUna(COL, id, leads);
   });
+}
+
+/** Para migrar de golpe lo que ya hubiera guardado. */
+export async function guardarTodos(leads: Lead[]) {
+  return enFila(() => escribir(COL, leads));
 }

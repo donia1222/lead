@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import axios from "axios";
 import { promises as fs } from "fs";
 import path from "path";
+import { enServidor, leer } from "@/lib/almacen";
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -54,10 +55,24 @@ export async function GET() {
     disco = { ok: false, donde, fallo: e instanceof Error ? e.message : String(e) };
   }
 
+  // El almacen: ¿esta puesto el endpoint del hosting y contesta?
+  let almacen: { donde: string; ok: boolean; leads?: number; fallo?: string };
+  if (enServidor) {
+    try {
+      const filas = await leer<{ id: string }>("leads");
+      almacen = { donde: "endpoint del hosting", ok: true, leads: filas.length };
+    } catch (e) {
+      almacen = { donde: "endpoint del hosting", ok: false, fallo: e instanceof Error ? e.message : String(e) };
+    }
+  } else {
+    almacen = { donde: "fichero local (no sirve en Vercel)", ok: !process.env.VERCEL };
+  }
+
   return NextResponse.json({
     donde: process.env.VERCEL ? `Vercel (${process.env.VERCEL_REGION ?? "?"})` : "este ordenador",
     clave_openai: process.env.OPENAI_API_KEY ? "puesta" : "FALTA",
     codigo_acceso: process.env.ACCESS_CODE ? "puesto" : "sin codigo",
+    almacen,
     escribir_en_disco: disco,
     alcanza: pruebas,
   });
