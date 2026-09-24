@@ -45,8 +45,11 @@ $SECURE = buscarSecretos();
 if (!is_file($SECURE . '/db_credentials.php')) fin(['error' => 'No encuentro secure_config'], 500);
 $CRED = (require $SECURE . '/db_credentials.php')['leadprospector'] ?? null;
 $ALMACEN = require $SECURE . '/almacen.php';
+// Vale el token (para llamadas de servidor a servidor) o el codigo de acceso
+// que escribes al entrar, que es lo que manda el navegador.
 $TOKEN = (string) ($ALMACEN['lead_token'] ?? '');
-if (!$CRED || $TOKEN === '') fin(['error' => 'Sin configurar en el servidor'], 500);
+$CODIGO = (string) ($ALMACEN['lead_codigo'] ?? '');
+if (!$CRED || ($TOKEN === '' && $CODIGO === '')) fin(['error' => 'Sin configurar en el servidor'], 500);
 
 // Freno para quien lo llame en bucle (la IP solo de paso, en un temporal).
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'x';
@@ -58,8 +61,9 @@ $marcas[] = $ahora;
 @file_put_contents($f, implode(',', $marcas), LOCK_EX);
 
 // El token, comparado sin filtrar el tiempo que tarda.
-$dado = (string) ($_SERVER['HTTP_X_LEAD_TOKEN'] ?? '');
-if ($dado === '' || !hash_equals($TOKEN, $dado)) fin(['error' => 'No autorizado'], 401);
+$dado = (string) ($_SERVER['HTTP_X_LEAD_TOKEN'] ?? $_SERVER['HTTP_X_LEAD_CODIGO'] ?? '');
+$vale = ($TOKEN !== '' && hash_equals($TOKEN, $dado)) || ($CODIGO !== '' && hash_equals($CODIGO, $dado));
+if ($dado === '' || !$vale) fin(['error' => 'No autorizado'], 401);
 
 $pdo = new PDO(
   "mysql:host={$CRED['host']};dbname={$CRED['db']};charset=utf8mb4",
