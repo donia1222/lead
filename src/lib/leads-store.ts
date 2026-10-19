@@ -16,7 +16,24 @@ export async function saveLead(lead: Lead) {
   return enFila(async () => {
     const leads = await leer<Lead>(COL);
     const i = leads.findIndex((l) => l.url === lead.url);
-    const fila = i >= 0 ? { ...leads[i], ...lead } : lead;
+    // Si el negocio ya estaba, lo que viene de la busqueda es el analisis de
+    // la web, NO tu trabajo con el: el que buscaba otra vez el mismo sector
+    // veia volver como «nuevo» a uno que ya habia contactado, y podia
+    // escribirle dos veces. El estado, la fecha de envio y el borrador que ya
+    // hubiera mandan sobre lo que traiga la busqueda.
+    // Y se queda con el id de siempre: buscar.php inventa uno nuevo en cada
+    // busqueda (`random_bytes`), y como el almacen guarda POR ID, el mismo
+    // negocio entraba otra vez como fila nueva en vez de actualizar la suya.
+    // De ahi los repetidos al repasar un sector.
+    const fila = i >= 0
+      ? {
+          ...leads[i], ...lead,
+          id: leads[i].id,
+          status: leads[i].status,
+          enviadoEn: leads[i].enviadoEn,
+          emailDraft: leads[i].emailDraft || lead.emailDraft,
+        }
+      : lead;
     if (i >= 0) leads[i] = fila;
     else leads.push(fila);
     await guardarUna(COL, fila, leads);

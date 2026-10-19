@@ -23,7 +23,13 @@ interface Lead {
   enviadoEn?: string;
 }
 
-type Filter = "all" | "new" | "contacted" | "discarded" | "latest";
+/**
+ * Las pestañas de la lista. «pendientes» es lo que queda por hacer y es la de
+ * entrada: antes habia «Activos» —todo menos lo descartado— y los que ya
+ * habias contactado seguian saliendo ahi en medio, con el riesgo de escribir
+ * dos veces al mismo. «todos» no esconde nada.
+ */
+type Filter = "pendientes" | "contacted" | "discarded" | "todos" | "latest";
 
 const SECTORS = [
   "restaurant", "coiffeur", "zahnarzt", "immobilien", "hotel",
@@ -94,7 +100,7 @@ export default function Home() {
   const [enBloque, setEnBloque] = useState(false);
   const [toast, setToast] = useState<{ text: string; kind: "ok" | "error" } | null>(null);
 
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>("pendientes");
   const [sectorFilter, setSectorFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
   const [textSearch, setTextSearch] = useState("");
@@ -380,8 +386,10 @@ export default function Home() {
         // historico: en cuanto uno se contacta o se descarta, se cae de aqui.
         // Sigue estando en Contactados y en Activos.
         if (!lastSearchIds.has(l.id) || l.status !== "new") return false;
-      } else if (filter === "all") {
-        if (l.status === "discarded") return false;
+      } else if (filter === "pendientes") {
+        if (l.status !== "new") return false;
+      } else if (filter === "todos") {
+        /* aqui no se esconde nada, ni lo descartado */
       } else if (l.status !== filter) return false;
       if (sectorFilter && l.sector !== sectorFilter) return false;
       if (cityFilter && l.city !== cityFilter) return false;
@@ -410,10 +418,10 @@ export default function Home() {
           count: leads.filter((l) => lastSearchIds.has(l.id) && l.status === "new").length,
         }]
       : []),
-    { f: "all", label: "Activos", count: leads.filter((l) => l.status !== "discarded").length },
-    { f: "new", label: "Nuevos", count: leads.filter((l) => l.status === "new").length },
+    { f: "pendientes", label: "Pendientes", count: leads.filter((l) => l.status === "new").length },
     { f: "contacted", label: "Contactados", count: leads.filter((l) => l.status === "contacted").length },
     { f: "discarded", label: "Descartados", count: leads.filter((l) => l.status === "discarded").length },
+    { f: "todos", label: "Todos", count: leads.length },
   ];
 
   const hasFilters = Boolean(sectorFilter || cityFilter || textSearch);
