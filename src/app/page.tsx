@@ -376,7 +376,10 @@ export default function Home() {
   const filtered = leads
     .filter((l) => {
       if (filter === "latest") {
-        if (!lastSearchIds.has(l.id)) return false;
+        // «Ultima busqueda» es la lista de lo que queda por hacer, no el
+        // historico: en cuanto uno se contacta o se descarta, se cae de aqui.
+        // Sigue estando en Contactados y en Activos.
+        if (!lastSearchIds.has(l.id) || l.status !== "new") return false;
       } else if (filter === "all") {
         if (l.status === "discarded") return false;
       } else if (l.status !== filter) return false;
@@ -400,7 +403,13 @@ export default function Home() {
     });
 
   const tabs: { f: Filter; label: string; count: number }[] = [
-    ...(lastSearchIds.size > 0 ? [{ f: "latest" as const, label: "Última búsqueda", count: lastSearchIds.size }] : []),
+    ...(lastSearchIds.size > 0
+      ? [{
+          f: "latest" as const,
+          label: "Última búsqueda",
+          count: leads.filter((l) => lastSearchIds.has(l.id) && l.status === "new").length,
+        }]
+      : []),
     { f: "all", label: "Activos", count: leads.filter((l) => l.status !== "discarded").length },
     { f: "new", label: "Nuevos", count: leads.filter((l) => l.status === "new").length },
     { f: "contacted", label: "Contactados", count: leads.filter((l) => l.status === "contacted").length },
