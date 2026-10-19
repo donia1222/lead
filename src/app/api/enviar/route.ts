@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     // Se apunta despues de que el correo haya salido, nunca antes: si el envio
     // falla, el lead tiene que seguir pendiente.
     if (id) await updateLead(id, { status: "contacted", enviadoEn: new Date().toISOString() });
-    return NextResponse.json({ ok: true, para: d.para, asunto: d.asunto });
+    return NextResponse.json({ ok: true, para: d.para, asunto: d.asunto, enEnviados: d.enEnviados !== false });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Sin conexion" }, { status: 502 });
   }

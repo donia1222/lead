@@ -302,7 +302,12 @@ export default function Home() {
       });
       const data = await res.json();
       if (data.ok) {
-        setToast({ text: `Email enviado a ${correo}`, kind: "ok" });
+        setToast({
+          text: data.enEnviados
+            ? `Email enviado a ${correo}`
+            : `Email enviado a ${correo} — pero no se ha podido guardar en Enviados`,
+          kind: "ok",
+        });
         await loadLeads();
       } else {
         setToast({ text: data.error || "No se ha podido enviar", kind: "error" });

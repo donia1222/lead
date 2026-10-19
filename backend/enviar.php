@@ -23,6 +23,16 @@
  *   lead_smtp_port   465 (cifrado desde el primer byte) o 587 (STARTTLS). Por defecto 465.
  *   lead_smtp_copia  1 para recibir siempre una copia oculta (opcional)
  * Si faltan host, user o pass, el boton avisa y no se manda nada.
+ *
+ * Y para que el correo aparezca ademas en «Gesendet», como si lo hubieras
+ * mandado tu desde el programa de correo (opcional; si no se pone nada se
+ * usa el mismo buzon del SMTP):
+ *   lead_imap_host    imap.mail.hostpoint.ch   (si falta, se deduce del SMTP)
+ *   lead_imap_port    993
+ *   lead_imap_user    por defecto, el del SMTP
+ *   lead_imap_pass    por defecto, la del SMTP
+ *   lead_imap_buzon   por defecto prueba «Gesendet», «Sent» y «INBOX.Sent»
+ *   lead_imap_guardar 0 para no guardar copia en Enviados
  */
 declare(strict_types=1);
 header('Content-Type: application/json; charset=utf-8');
@@ -205,4 +215,77 @@ if ($copia && strcasecmp($user, $para) !== 0) $destinos[] = $user;
 
 smtp($host, $puerto, $user, $pass, $user, $destinos, $mensaje);
 
-fin(['ok' => true, 'para' => $para, 'asunto' => $asunto, 'copia' => $copia]);
+/**
+ * Dejar una copia en la carpeta de Enviados del buzon.
+ *
+ * Un correo mandado por SMTP no pasa por «Gesendet»: esa carpeta la escribe
+ * el programa de correo cuando mandas desde el. Aqui se escribe a mano por
+ * IMAP, que es exactamente lo que hace Mail por dentro.
+ *
+ * Si esto falla NO se da el envio por fallido: el correo ya ha salido, y
+ * decir que no cuando si, lleva a mandarlo dos veces. Se devuelve aparte.
+ */
+function guardarEnEnviados(string $host, int $puerto, string $user, string $pass,
+                           string $buzonPedido, string $mensaje): string {
+  $s = @stream_socket_client('ssl://' . $host . ':' . $puerto, $n, $e, 15);
+  if (!$s) return 'no se puede hablar con el servidor';
+  stream_set_timeout($s, 15);
+
+  $leer = function (string $marca) use ($s): string {
+    $todo = '';
+    while (($linea = fgets($s, 8192)) !== false) {
+      $todo .= $linea;
+      if (strncmp($linea, $marca . ' ', strlen($marca) + 1) === 0) break;  // respuesta final
+      if (isset($linea[0]) && $linea[0] === '+') break;                     // «sigue, mandame el texto»
+    }
+    return $todo;
+  };
+  $ok = fn(string $r) => (bool) preg_match('/^\S+ OK/mi', $r);
+
+  $leer('*');                                   // el saludo
+  $comilla = fn(string $t) => '"' . addcslashes($t, '"\\') . '"';
+  fwrite($s, 'a1 LOGIN ' . $comilla($user) . ' ' . $comilla($pass) . "\r\n");
+  if (!$ok($leer('a1'))) { fclose($s); return 'no ha dejado entrar'; }
+
+  // El nombre de la carpeta cambia segun el idioma del buzon. Se prueba la
+  // pedida y despues las de siempre; la primera que acepte, vale.
+  $buzones = array_values(array_unique(array_filter([$buzonPedido, 'Gesendet', 'Sent', 'INBOX.Sent', 'INBOX.Gesendet'])));
+  $largo = strlen($mensaje);
+  $i = 1;
+  foreach ($buzones as $buzon) {
+    $marca = 'b' . (++$i);
+    fwrite($s, $marca . ' APPEND ' . $comilla($buzon) . " (\\Seen) {" . $largo . "}\r\n");
+    $r = $leer($marca);
+    if (isset($r[0]) && strpos($r, '+') !== false && !preg_match('/^\S+ (NO|BAD)/mi', $r)) {
+      fwrite($s, $mensaje . "\r\n");
+      if ($ok($leer($marca))) {
+        fwrite($s, "z LOGOUT\r\n");
+        fclose($s);
+        return 'ok:' . $buzon;
+      }
+    }
+  }
+  @fwrite($s, "z LOGOUT\r\n");
+  fclose($s);
+  return 'ninguna carpeta de enviados ha aceptado la copia';
+}
+
+$enEnviados = 'apagado';
+if ((int) ($ALMACEN['lead_imap_guardar'] ?? 1) === 1) {
+  $ihost = (string) ($ALMACEN['lead_imap_host'] ?? '');
+  if ($ihost === '') $ihost = preg_replace('/^a?smtp\./', 'imap.', $host);
+  $enEnviados = guardarEnEnviados(
+    $ihost,
+    (int) ($ALMACEN['lead_imap_port'] ?? 993),
+    (string) ($ALMACEN['lead_imap_user'] ?? $user),
+    (string) ($ALMACEN['lead_imap_pass'] ?? $pass),
+    (string) ($ALMACEN['lead_imap_buzon'] ?? 'Gesendet'),
+    $mensaje
+  );
+}
+
+fin([
+  'ok' => true, 'para' => $para, 'asunto' => $asunto, 'copia' => $copia,
+  'enEnviados' => str_starts_with($enEnviados, 'ok:'),
+  'detalleEnviados' => $enEnviados,
+]);
