@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+/** La puerta. Fondo negro, el logo grande y nada mas: es la entrada al
+ *  programa, no una pagina de la web. Igual que la del panel. */
 export default function LoginPage() {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -26,47 +28,33 @@ export default function LoginPage() {
       router.push("/");
       router.refresh();
     } else {
-      setError("Falscher Zugangscode");
+      setError("Código incorrecto");
       setLoading(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-sm border border-slate-200 shadow-sm">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white grid place-items-center font-bold text-xl shadow-sm mx-auto mb-4">L</div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-2 text-center">
-          Lead Prospector
-        </h1>
-        <p className="text-slate-500 text-sm text-center mb-6">
-          Zugangscode eingeben
-        </p>
+    <main className="puerta">
+      <div className="caja">
+        <i aria-label="Lweb" />
+        <p className="txt">Lead Prospector</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit}>
           <input
             type="password"
-            placeholder="Code"
+            placeholder="Código"
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="w-full bg-slate-50 text-slate-900 px-4 py-3 rounded-lg text-center text-lg tracking-widest border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             autoFocus
             required
           />
-
-          {error && (
-            <p className="text-red-500 text-sm text-center">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium disabled:opacity-50 transition-colors"
-          >
-            {loading ? "..." : "Zugang"}
+          {error && <p className="fallo">{error}</p>}
+          <button type="submit" className="btn" disabled={loading}>
+            {loading ? "Entrando…" : "Entrar"}
           </button>
         </form>
 
-        <p className="text-slate-400 text-xs text-center mt-6">Lweb</p>
+        <p className="pie">Lweb · uso interno</p>
       </div>
     </main>
   );

@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Lead Prospector - Lweb",
-  description: "Herramienta de prospeccion local para Lweb",
+  title: "Lead Prospector — Lweb",
+  description: "Herramienta interna de captacion de Lweb",
 };
 
 export default function RootLayout({

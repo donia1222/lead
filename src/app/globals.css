@@ -4,8 +4,314 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
-body {
-  background: #f8fafc;
-  color: #0f172a;
-  font-family: var(--font-sans);
+/* =====================================================================
+   LEAD PROSPECTOR · hoja de estilo
+   Esto era una pagina web: barra arriba, tarjetas redondas y la pagina
+   entera haciendo scroll. Ahora es una ventana de programa, con el mismo
+   armazon y la misma paleta que el panel de Verwaltung — el menu a la
+   izquierda, la barra de arriba y la de estado QUIETAS, y solo el
+   contenido moviendose.
+   La paleta es la del panel, copiada tal cual para que se reconozca como
+   el mismo sistema: el lateral va del negro del logo, no del azul, asi el
+   rectangulo negro del PNG se funde con el fondo y no se ve el recorte.
+   ===================================================================== */
+:root{
+  --tinta:#15191e; --tinta2:#4d5761; --suave:#8b949e;
+  --linea:#e4e7eb; --papel:#fff; --fondo:#f5f6f8;
+  --marca:#b2122a; --acento:#1d2b3a; --verde:#0f7b52; --ambar:#a2670a;
+  --lateral:#0d0d0f; --lateral-2:#1e1e22; --lateral-txt:#9b9ba3;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;overflow:hidden;
+  background:var(--fondo);color:var(--tinta);
+  font-family:Inter,system-ui,-apple-system,sans-serif;font-size:15px;
+}
+
+/* ---------- el armazon ---------- */
+.programa{display:flex;height:100%}
+
+/* ---------- el menu lateral ---------- */
+.lateral{width:238px;flex:none;z-index:40;display:flex;flex-direction:column;
+  background:var(--lateral);color:var(--lateral-txt)}
+.lateral .marca{display:flex;flex-direction:column;align-items:center;gap:9px;
+  padding:20px 14px 16px;border-bottom:1px solid rgba(255,255,255,.09);color:#fff}
+.lateral .marca i{width:152px;height:69px;display:block;flex:none;
+  background:url('/logo-menu.png') center/contain no-repeat}
+.lateral .marca .txt{font-size:9.5px;font-weight:600;letter-spacing:.13em;
+  text-transform:uppercase;color:#7d7d87;text-align:center}
+
+.pestanas{display:flex;flex-direction:column;gap:9px;padding:12px 10px;flex:1;overflow-y:auto}
+/* En bloques, no una lista seguida: arriba a quien se va a visitar, debajo
+   lo que se saca de ahi. El bloque es un fondo apenas mas claro, no una
+   caja con borde — dentro de un lateral oscuro un borde pesa demasiado. */
+.grupo{display:flex;flex-direction:column;gap:2px;
+  background:rgba(255,255,255,.045);border-radius:12px;padding:4px}
+.grupo > .titulo{font-size:9.5px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:#6d6d77;padding:7px 11px 4px}
+.pestanas a,.pestanas button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  font:inherit;font-size:14px;font-weight:600;border:0;background:none;color:var(--lateral-txt);
+  padding:9px 11px;border-radius:9px;cursor:pointer;text-decoration:none;
+  transition:background .13s,color .13s}
+.pestanas a svg,.pestanas button svg{width:17px;height:17px;flex:none;opacity:.72;pointer-events:none}
+.pestanas a:hover,.pestanas button:hover{background:var(--lateral-2);color:#fff}
+.pestanas a:hover svg,.pestanas button:hover svg{opacity:1}
+.pestanas a[aria-current="page"]{background:#fff;color:#101014}
+.pestanas a[aria-current="page"] svg{opacity:1}
+/* El rotulo: arriba el nombre y debajo, pequeno, lo que es. Con el nombre
+   solo, «Leads» y «Negocios nuevos» no se distinguen de un vistazo. */
+.pestanas .rot{display:flex;flex-direction:column;gap:1px;min-width:0}
+.pestanas .rot small{font-size:11px;font-weight:600;color:inherit;opacity:.5;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pestanas a[aria-current="page"] .rot small{opacity:.62}
+/* Lo que sale del programa lleva flechita y el oro del logotipo. */
+.pestanas a.fuera svg:first-child{color:#e3b25f;opacity:.95}
+.pestanas a.fuera:hover{color:#f6e3c0}
+.pestanas .salida{margin-left:auto;opacity:.45;width:13px;height:13px}
+
+.acciones-cuenta{padding:12px 12px 16px;border-top:1px solid rgba(255,255,255,.09)}
+.acciones-cuenta .quien{font-size:12px;font-weight:600;color:#7d7d87;margin-bottom:7px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acciones-cuenta button{width:100%;justify-content:flex-start;background:var(--lateral-2);
+  color:#d7d7de;border-radius:9px;padding:8px 11px;font-size:13px;font-weight:600;
+  display:flex;align-items:center;gap:9px;border:0;cursor:pointer;font-family:inherit}
+.acciones-cuenta button:hover{background:#2c2c33;color:#fff}
+.acciones-cuenta button svg{width:16px;height:16px;opacity:.75}
+
+/* ---------- el area de trabajo ---------- */
+.area{flex:1;min-width:0;display:flex;flex-direction:column;height:100%;background:var(--fondo)}
+/* La barra de arriba hace de titulo de ventana: dice donde estas y poco mas.
+   Lo que se guarda y como va la cosa se cuenta abajo, como en un programa. */
+.barra{flex:none;display:flex;align-items:center;gap:12px;min-height:48px;padding:0 20px;
+  background:var(--papel);border-bottom:1px solid var(--linea)}
+.titulo-barra{display:flex;align-items:baseline;gap:9px;min-width:0;
+  font-size:13.5px;font-weight:700;color:var(--tinta)}
+.titulo-barra small{font-weight:500;font-size:12px;color:var(--suave);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.barra .acciones{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+.envoltura{flex:1;min-height:0;overflow-y:auto;padding:20px 22px 40px}
+.envoltura > *{max-width:min(1180px,100%);margin-left:auto;margin-right:auto}
+
+/* La barra de estado. Un programa dice abajo, bajito y siempre, como va. */
+.barra-estado{flex:none;display:flex;align-items:center;gap:14px;height:27px;padding:0 16px;
+  background:var(--papel);border-top:1px solid var(--linea);
+  font-size:11.5px;color:var(--suave);user-select:none}
+.barra-estado .estado{display:flex;align-items:center;gap:7px}
+.barra-estado .derecha{margin-left:auto;letter-spacing:.02em}
+.punto{width:7px;height:7px;border-radius:50%;background:#d6dae0;flex:none}
+.punto.si{background:var(--verde)}
+.punto.no{background:var(--ambar)}
+.punto.trabajando{background:var(--ambar);animation:latido 1s ease-in-out infinite}
+@keyframes latido{50%{opacity:.25}}
+
+/* ---------- controles ---------- */
+button{font:inherit;border:0;border-radius:9px;cursor:pointer}
+.btn{background:var(--acento);color:#fff;font-weight:600;font-size:14px;padding:9px 16px;
+  white-space:nowrap;display:inline-flex;align-items:center;gap:8px;border-radius:9px}
+.btn:hover:not(:disabled){filter:brightness(1.15)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.claro{background:#eceef1;color:var(--tinta)}
+.btn.claro:hover:not(:disabled){background:#e2e5ea;filter:none}
+.btn.chico{padding:6px 11px;font-size:13px;border-radius:8px}
+.btn.plano{background:none;color:var(--tinta2);padding:6px 10px;font-size:13px}
+.btn.plano:hover:not(:disabled){background:#eceef1;filter:none}
+.btn.peligro{background:none;color:var(--suave);padding:6px 10px;font-size:13px}
+.btn.peligro:hover:not(:disabled){color:var(--marca);background:#fdf2f3;filter:none}
+.btn.peligro.firme{background:var(--marca);color:#fff}
+.btn.peligro.firme:hover{background:#8f0e21;color:#fff}
+.btn svg{width:15px;height:15px;flex:none}
+
+label{display:block;font-size:12.5px;color:var(--tinta2);margin:0 0 4px}
+input,textarea,select{width:100%;font:inherit;font-size:14px;padding:8px 11px;
+  border:1px solid var(--linea);border-radius:9px;background:#fcfcfd;color:var(--tinta)}
+/* La flecha del sistema es lo que mas delata que esto es una pagina: en
+   Windows sale gris y cuadrada y en el Mac azul. Se apaga y se dibuja una
+   propia, igual en los dos. */
+select{appearance:none;-webkit-appearance:none;padding-right:30px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 11px center}
+select::-ms-expand{display:none}
+input:focus,textarea:focus,select:focus{outline:2px solid #ccd6e0;border-color:#aebcca}
+textarea{resize:vertical}
+
+/* ---------- piezas comunes ---------- */
+.tarjeta{background:var(--papel);border:1px solid var(--linea);border-radius:12px;padding:14px 16px}
+.cifra{font-variant-numeric:tabular-nums}
+.vacio{color:var(--suave);font-size:14px;padding:40px 0;text-align:center;
+  background:var(--papel);border:1px solid var(--linea);border-radius:12px}
+.vacio b{display:block;color:var(--tinta);font-size:15px;margin-bottom:4px}
+
+/* Los filtros de estado: botones cuadrados de programa, no pastillas. */
+.filtros{display:flex;min-width:0;max-width:100%;gap:2px;background:#eceef1;border-radius:10px;padding:3px;flex-wrap:wrap}
+.filtros button{background:none;color:var(--tinta2);padding:6px 12px;border-radius:8px;
+  font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:7px}
+.filtros button:hover{color:var(--tinta)}
+.filtros button[aria-selected="true"]{background:var(--papel);color:var(--tinta);
+  box-shadow:0 1px 3px rgba(0,0,0,.09)}
+.filtros button b{font-variant-numeric:tabular-nums;font-size:11.5px;font-weight:700;
+  background:rgba(0,0,0,.07);border-radius:5px;padding:1px 5px;color:var(--tinta2)}
+.filtros button[aria-selected="true"] b{background:var(--acento);color:#fff}
+
+/* La herramienta de trabajo: una fila por negocio, no una tarjeta grande.
+   Caben el doble en pantalla y se leen en columna. */
+.lista{width:100%;border-collapse:separate;border-spacing:0;background:var(--papel);
+  border:1px solid var(--linea);border-radius:12px;overflow:hidden;font-size:13.5px}
+.lista thead th{background:#fafbfc;border-bottom:1px solid var(--linea);
+  font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--suave);text-align:left;padding:8px 12px;white-space:nowrap}
+.lista td{border-bottom:1px solid var(--linea);padding:9px 12px;vertical-align:top}
+.lista tbody tr:last-child td,.lista tbody tr.abierta td{border-bottom:0}
+.lista tbody tr.fila:hover > td{background:#fbfcfd}
+.lista tbody tr.apagada > td{opacity:.5}
+.lista tbody tr.apagada:hover > td{opacity:1}
+.lista .nombre{font-size:14px;font-weight:600;color:var(--tinta);letter-spacing:-.01em}
+.lista .donde{color:var(--suave);font-size:12px;margin-top:1px}
+.lista a{color:var(--acento);text-decoration:none}
+.lista a:hover{text-decoration:underline}
+/* Un boton dentro de la tabla manda su propio color: si no, la regla de
+   arriba le pinta el texto del mismo color que su fondo y sale una caja
+   negra vacia. Paso de verdad. */
+.lista a.btn{color:#fff}
+.lista a.btn.claro{color:var(--tinta)}
+.lista a.btn:hover{text-decoration:none}
+.lista .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+  color:var(--tinta2)}
+.lista .acciones{display:flex;align-items:center;gap:2px;justify-content:flex-end}
+.lista .detalle > td{background:#fafbfc;border-bottom:1px solid var(--linea);padding:14px 16px}
+
+/* La tabla se lleva su propio scroll de lado: asi en pantalla estrecha se
+   arrastra la tabla y no la pagina entera, que es lo que descoloca todo. */
+.tabla{overflow-x:auto;max-width:100%}
+
+/* La puntuacion: un cuadro, no un circulo de colores. */
+.punt{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  width:40px;height:38px;border-radius:9px;border:1px solid;font-variant-numeric:tabular-nums}
+.punt b{font-size:15px;font-weight:700;line-height:1}
+.punt small{font-size:8.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.punt.alta{background:#e6f5ee;border-color:#bfe3d2;color:var(--verde)}
+.punt.media{background:#fff4e0;border-color:#f0dcb6;color:var(--ambar)}
+.punt.baja{background:#fdeaec;border-color:#f3cdd3;color:var(--marca)}
+
+/* Las etiquetas de estado, cuadradas y pequenas. */
+.eti{display:inline-flex;align-items:center;gap:4px;border-radius:6px;padding:2px 7px;
+  font-size:11px;font-weight:600;white-space:nowrap}
+.eti svg{width:11px;height:11px}
+.eti.ok{background:#e6f5ee;color:var(--verde)}
+.eti.mal{background:#fdeaec;color:var(--marca)}
+.eti.gris{background:#eef1f5;color:var(--tinta2)}
+.eti.aviso{background:#fff4e0;color:var(--ambar)}
+.etiquetas{display:flex;flex-wrap:wrap;gap:4px}
+
+/* El borrador del correo, en papel aparte dentro de la fila abierta. */
+.borrador{border:1px solid var(--linea);border-radius:10px;overflow:hidden;background:var(--papel)}
+.borrador .arriba{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:7px 11px;background:#f5f6f8;border-bottom:1px solid var(--linea)}
+.borrador pre{margin:0;padding:14px 16px;font-family:inherit;font-size:13.5px;
+  line-height:1.6;color:var(--tinta2);white-space:pre-wrap}
+.idiomas{display:flex;gap:1px;background:var(--papel);border:1px solid var(--linea);
+  border-radius:8px;padding:2px}
+.idiomas button{padding:3px 8px;border-radius:6px;font-size:11.5px;font-weight:700;
+  text-transform:uppercase;color:var(--tinta2);background:none;letter-spacing:.04em}
+.idiomas button:hover:not(:disabled){background:#eef1f5;color:var(--tinta)}
+
+/* ---------- el cajon de la derecha ---------- */
+.velo{position:fixed;inset:0;z-index:50;background:rgba(13,13,15,.45)}
+.cajon{position:fixed;right:0;top:0;bottom:0;z-index:51;width:100%;max-width:520px;
+  background:var(--fondo);border-left:1px solid var(--linea);display:flex;flex-direction:column;
+  box-shadow:-18px 0 40px rgba(13,13,15,.16)}
+.cajon .arriba{flex:none;display:flex;align-items:center;gap:10px;height:48px;padding:0 16px;
+  background:var(--papel);border-bottom:1px solid var(--linea);
+  font-size:13.5px;font-weight:700}
+.cajon .cuerpo{flex:1;min-height:0;overflow-y:auto;padding:16px}
+.cajon .pie{flex:none;padding:14px 16px;background:var(--papel);border-top:1px solid var(--linea)}
+.cajon .cerrar{margin-left:auto;background:none;color:var(--suave);padding:6px;border-radius:8px;
+  display:flex}
+.cajon .cerrar:hover{background:#eceef1;color:var(--tinta)}
+.cajon .cerrar svg{width:17px;height:17px}
+
+/* Las fichas de elegir sector y pueblo: casillas cuadradas de programa. */
+.fichas{display:flex;flex-wrap:wrap;gap:4px;max-height:168px;overflow-y:auto;
+  border:1px solid var(--linea);border-radius:10px;padding:8px;background:var(--papel)}
+.fichas button{border:1px solid var(--linea);background:#fcfcfd;color:var(--tinta2);
+  border-radius:7px;padding:5px 10px;font-size:12.5px;font-weight:600;
+  display:inline-flex;align-items:center;gap:5px}
+.fichas button:hover{border-color:#c7ced6;color:var(--tinta)}
+.fichas button[aria-pressed="true"]{background:var(--acento);border-color:var(--acento);color:#fff}
+.fichas button svg{width:11px;height:11px}
+
+.apartado{margin-bottom:18px}
+.apartado > .cab{display:flex;align-items:center;justify-content:space-between;
+  gap:10px;margin-bottom:7px}
+.apartado > .cab .nom{font-size:12.5px;font-weight:700;color:var(--tinta);
+  display:flex;align-items:center;gap:7px}
+.apartado > .cab .nom b{font-variant-numeric:tabular-nums;font-size:11px;
+  background:var(--acento);color:#fff;border-radius:5px;padding:1px 6px}
+.apartado > .cab .enlaces{display:flex;gap:10px;font-size:12px;font-weight:600}
+.apartado > .cab .enlaces button{background:none;color:var(--acento);padding:0}
+.apartado > .cab .enlaces button:hover{text-decoration:underline}
+
+.progreso{height:5px;background:#e4e7eb;border-radius:999px;overflow:hidden}
+.progreso > i{display:block;height:100%;background:var(--acento);border-radius:999px;
+  transition:width .4s}
+
+/* ---------- el aviso de abajo ---------- */
+.notificacion{position:fixed;right:18px;bottom:40px;z-index:60;max-width:380px;
+  display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:10px;
+  background:var(--acento);color:#fff;font-size:13.5px;font-weight:500;
+  box-shadow:0 10px 30px rgba(13,13,15,.22)}
+.notificacion.error{background:var(--marca)}
+.notificacion svg{width:16px;height:16px;flex:none}
+.notificacion button{background:none;color:inherit;opacity:.7;padding:0;display:flex}
+.notificacion button:hover{opacity:1}
+
+/* ---------- la puerta ---------- */
+.puerta{height:100%;display:flex;align-items:center;justify-content:center;
+  background:var(--lateral);padding:24px}
+.puerta .caja{width:100%;max-width:330px;text-align:center}
+.puerta i{width:184px;height:84px;display:block;margin:0 auto 6px;
+  background:url('/logo-menu.png') center/contain no-repeat}
+.puerta .txt{font-size:9.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;
+  color:#7d7d87;margin-bottom:26px}
+.puerta input{background:#1e1e22;border-color:#2c2c33;color:#fff;text-align:center;
+  letter-spacing:.3em;padding:11px}
+.puerta input:focus{outline:2px solid #3a3a44;border-color:#3a3a44}
+.puerta input::placeholder{letter-spacing:.1em;color:#6d6d77}
+.puerta .btn{width:100%;justify-content:center;margin-top:9px;background:#fff;color:#101014}
+.puerta .btn:hover:not(:disabled){background:#e9e9ee;filter:none}
+.puerta .fallo{color:#ef7e8c;font-size:13px;margin:10px 0 0}
+.puerta .pie{color:#6d6d77;font-size:11px;margin-top:22px;letter-spacing:.04em}
+
+/* ---------- pantallas estrechas ----------
+   En el movil el menu no cabe al lado: pasa a ser una barra de arriba con
+   las dos secciones, y la pagina vuelve a hacer scroll normal. */
+@media (max-width:860px){
+  body{overflow:auto}
+  /* En el movil sobran columnas: la web y el chequeo se miran abriendo la
+     ficha. Se quedan el nombre, el contacto y los botones. */
+  .lista .op{display:none}
+  .programa{flex-direction:column;height:auto;min-height:100%}
+  .lateral{width:100%;flex-direction:row;align-items:center;gap:10px;padding:0 12px;
+    position:sticky;top:0}
+  .lateral .marca{border-bottom:0;padding:8px 0;flex-direction:row;gap:0}
+  .lateral .marca i{width:74px;height:34px}
+  .lateral .marca .txt{display:none}
+  /* La fila se arrastra de lado si no cabe, pero empieza por el principio:
+     con justify-content al final se entraba con la primera entrada cortada. */
+  .pestanas{flex-direction:row;padding:8px 0;gap:6px;flex:1;justify-content:flex-start;
+    overflow-x:auto;overflow-y:hidden}
+  .grupo{flex-direction:row;background:none;padding:0;gap:4px}
+  .grupo > .titulo{display:none}
+  .pestanas .rot small{display:none}
+  .pestanas a,.pestanas button{width:auto;white-space:nowrap}
+  .acciones-cuenta{border-top:0;padding:0 0 0 4px}
+  .acciones-cuenta .quien{display:none}
+  .acciones-cuenta button{width:auto;padding:8px}
+  .acciones-cuenta button span{display:none}
+  .area{height:auto}
+  .envoltura{overflow:visible;padding:16px 14px 40px}
+  .barra{position:sticky;top:50px;z-index:30;flex-wrap:wrap;padding:8px 14px;gap:8px}
+  .barra-estado{position:sticky;bottom:0;z-index:30}
+  .cajon{max-width:100%}
 }

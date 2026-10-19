@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local leads storage
 /data/
+
+# Copias de seguridad que hago antes de tocar un fichero. No suben.
+*.antes-*

@@ -15,6 +15,8 @@ export interface Lead {
   status: "new" | "contacted" | "discarded";
   emailDraft: string;
   createdAt: string;
+  /** Cuando salio el email desde el servidor. Vacio si nunca se mando. */
+  enviadoEn?: string;
 }
 
 /** Un negocio recien inscrito en el registro de comercio (boletin SHAB/FOSC). */
