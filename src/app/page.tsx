@@ -55,6 +55,16 @@ const LANGS = ["de", "es", "en", "fr", "it"];
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/**
+ * La direccion, limpia. El raspado a veces se trae un caracter pegado al
+ * final —«...@gmail.com\»— y asi el servidor de correo la rechaza. Se quita
+ * aqui en vez de en la base: lo que hay guardado ya esta guardado.
+ */
+function limpiarEmail(x: string) {
+  const e = (x || "").trim().replace(/^[<"'(\[]+/, "").replace(/[>"')\].,;:\\/]+$/, "");
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) ? e : "";
+}
+
 function splitDraft(draft: string) {
   const subjectMatch = draft.match(/^(?:Betreff|Asunto|Subject|Objet|Oggetto):\s*(.+)$/mi);
   const subject = subjectMatch ? subjectMatch[1].trim() : "Ihre Webseite";
@@ -80,6 +90,8 @@ export default function Home() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [enviando, setEnviando] = useState<string | null>(null);
+  const [marcados, setMarcados] = useState<Set<string>>(new Set());
+  const [enBloque, setEnBloque] = useState(false);
   const [toast, setToast] = useState<{ text: string; kind: "ok" | "error" } | null>(null);
 
   const [filter, setFilter] = useState<Filter>("all");
@@ -273,20 +285,24 @@ export default function Home() {
    * puede deshacer.
    */
   async function enviarEmail(lead: Lead, borrador: string) {
-    if (!lead.email) return;
+    const correo = limpiarEmail(lead.email);
+    if (!correo) {
+      setToast({ text: `La dirección de ${lead.name} no es válida: ${lead.email}`, kind: "error" });
+      return;
+    }
     const { subject, body } = splitDraft(borrador);
-    if (!confirm(`¿Mandar el email a ${lead.name}?\n\n${lead.email}\nAsunto: ${subject}\n\nSale desde tu buzón y no se puede deshacer.`)) return;
+    if (!confirm(`¿Mandar el email a ${lead.name}?\n\n${correo}\nAsunto: ${subject}\n\nSale desde tu buzón y no se puede deshacer.`)) return;
 
     setEnviando(lead.id);
     try {
       const res = await fetch("/api/enviar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: lead.id, para: lead.email, nombre: lead.name, asunto: subject, texto: body }),
+        body: JSON.stringify({ id: lead.id, para: correo, nombre: lead.name, asunto: subject, texto: body }),
       });
       const data = await res.json();
       if (data.ok) {
-        setToast({ text: `Email enviado a ${lead.email}`, kind: "ok" });
+        setToast({ text: `Email enviado a ${correo}`, kind: "ok" });
         await loadLeads();
       } else {
         setToast({ text: data.error || "No se ha podido enviar", kind: "error" });
@@ -295,6 +311,48 @@ export default function Home() {
       setToast({ text: "No se ha podido enviar", kind: "error" });
     }
     setEnviando(null);
+  }
+
+  function marcar(id: string, si: boolean) {
+    setMarcados((p) => {
+      const n = new Set(p);
+      if (si) n.add(id); else n.delete(id);
+      return n;
+    });
+  }
+
+  /**
+   * Lo marcado, de golpe. Va en una sola llamada y no en una por lead: con
+   * diez marcados eran diez viajes al almacen, y si fallaba el quinto te
+   * quedabas sin saber cuales se habian hecho.
+   */
+  async function enBloqueHacer(que: "descartar" | "recuperar" | "borrar") {
+    const ids = [...marcados];
+    if (!ids.length) return;
+    if (que === "borrar" && !confirm(`¿Eliminar ${ids.length} ${ids.length === 1 ? "lead" : "leads"}?\n\nEsto no se puede deshacer. Si solo quieres quitarlos de en medio, usa Descartar.`)) return;
+
+    setEnBloque(true);
+    try {
+      const res = await fetch("/api/leads", {
+        method: que === "borrar" ? "DELETE" : "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(que === "borrar" ? { ids } : { ids, status: que === "descartar" ? "discarded" : "new" }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || "");
+      const n = data.borrados ?? data.cambiados ?? ids.length;
+      setToast({
+        text: que === "borrar" ? `${n} ${n === 1 ? "lead eliminado" : "leads eliminados"}`
+            : que === "descartar" ? `${n} ${n === 1 ? "descartado" : "descartados"}`
+            : `${n} ${n === 1 ? "recuperado" : "recuperados"}`,
+        kind: "ok",
+      });
+      setMarcados(new Set());
+      await loadLeads();
+    } catch {
+      setToast({ text: "No se ha podido hacer", kind: "error" });
+    }
+    setEnBloque(false);
   }
 
   async function copyDraft(id: string, text: string) {
@@ -345,6 +403,9 @@ export default function Home() {
   ];
 
   const hasFilters = Boolean(sectorFilter || cityFilter || textSearch);
+  // Marcar «todos» marca lo que se esta viendo, no los 300 que hay guardados.
+  const visiblesMarcados = filtered.filter((l) => marcados.has(l.id)).length;
+  const todosMarcados = filtered.length > 0 && visiblesMarcados === filtered.length;
   const combos = search.sectors.length * search.cities.length;
   const progressPct = searchProgress.total ? Math.round((searchProgress.done / searchProgress.total) * 100) : 0;
   const sinEmail = leads.filter((l) => l.status !== "discarded" && !l.email).length;
@@ -424,6 +485,26 @@ export default function Home() {
         )}
       </div>
 
+      {marcados.size > 0 && (
+        <div className="marcados">
+          <b className="cifra">{marcados.size}</b>
+          <span>{marcados.size === 1 ? "marcado" : "marcados"}</span>
+          <span style={{ flex: 1 }} />
+          <button className="btn claro chico" onClick={() => enBloqueHacer("descartar")} disabled={enBloque}>
+            <Icono n="caja" /> Descartar
+          </button>
+          <button className="btn claro chico" onClick={() => enBloqueHacer("recuperar")} disabled={enBloque}>
+            <Icono n="volver" /> Recuperar
+          </button>
+          <button className="btn peligro firme chico" onClick={() => enBloqueHacer("borrar")} disabled={enBloque}>
+            {enBloque ? <Rueda /> : <Icono n="papelera" />} Eliminar
+          </button>
+          <button className="btn plano" onClick={() => setMarcados(new Set())}>
+            <Icono n="x" /> Quitar
+          </button>
+        </div>
+      )}
+
       {loaded && filtered.length === 0 ? (
         <div className="vacio">
           <b>{leads.length === 0 ? "Todavía no hay leads" : "Ningún lead con estos filtros"}</b>
@@ -444,6 +525,19 @@ export default function Home() {
         <div className="tabla"><table className="lista">
           <thead>
             <tr>
+              <th style={{ width: 34 }}>
+                <input
+                  type="checkbox"
+                  checked={todosMarcados}
+                  ref={(e) => { if (e) e.indeterminate = visiblesMarcados > 0 && !todosMarcados; }}
+                  onChange={(e) => {
+                    const n = new Set(marcados);
+                    filtered.forEach((l) => (e.target.checked ? n.add(l.id) : n.delete(l.id)));
+                    setMarcados(n);
+                  }}
+                  title="Marcar todos los que se ven"
+                />
+              </th>
               <th style={{ width: 54 }}>Punt.</th>
               <th>Negocio</th>
               <th className="op" style={{ width: 190 }}>Web</th>
@@ -459,13 +553,23 @@ export default function Home() {
               const busy = (generatingEmail && showEmail === lead.id) || translating === lead.id;
               const href = lead.url.startsWith("http") ? lead.url : "https://" + lead.url;
               const punt = lead.score >= 50 ? "alta" : lead.score >= 25 ? "media" : "baja";
-              const envio = lead.email && draft ? splitDraft(draft) : null;
+              const correo = limpiarEmail(lead.email);
+              const envio = correo && draft ? splitDraft(draft) : null;
+              const escribiendo = generatingEmail && showEmail === lead.id;
 
               return (
                 <Fragment key={lead.id}>
                   <tr
                     className={`fila${lead.status === "discarded" ? " apagada" : ""}${isOpen ? " abierta" : ""}`}
                   >
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={marcados.has(lead.id)}
+                        onChange={(e) => marcar(lead.id, e.target.checked)}
+                        aria-label={`Marcar ${lead.name}`}
+                      />
+                    </td>
                     <td>
                       <span className={`punt ${punt}`} title="Puntuación de oportunidad">
                         <b>{lead.score}</b>
@@ -496,8 +600,10 @@ export default function Home() {
                       )}
                     </td>
                     <td>
-                      {lead.email ? (
-                        <a href={`mailto:${lead.email}`} className="mono">{lead.email}</a>
+                      {correo ? (
+                        <a href={`mailto:${correo}`} className="mono">{correo}</a>
+                      ) : lead.email ? (
+                        <span className="eti aviso" title={lead.email}><Icono n="sobre" /> email con fallo</span>
                       ) : (
                         <span className="eti mal"><Icono n="sobre" /> sin email</span>
                       )}
@@ -523,7 +629,7 @@ export default function Home() {
                     </td>
                     <td>
                       <div className="acciones">
-                        {envio && (
+                        {envio ? (
                           <button
                             className="btn chico"
                             onClick={() => enviarEmail(lead, draft)}
@@ -533,7 +639,26 @@ export default function Home() {
                             {enviando === lead.id ? <Rueda /> : <Icono n="enviar" />}
                             {enviando === lead.id ? "Enviando…" : "Enviar"}
                           </button>
-                        )}
+                        ) : correo ? (
+                          /* Hay a quien escribir pero todavia no hay carta:
+                             antes aqui no habia nada y parecia que el lead no
+                             servia. Se escribe y el boton pasa a «Enviar». */
+                          <button
+                            className="btn claro chico"
+                            onClick={() => handleGenerateEmail(lead)}
+                            disabled={escribiendo}
+                            title="Escribir el email con la IA"
+                          >
+                            {escribiendo ? <Rueda /> : <Icono n="chispas" />}
+                            {escribiendo ? "Escribiendo…" : "Escribir"}
+                          </button>
+                        ) : lead.phone ? (
+                          /* Sin direccion no hay email que mandar: lo que queda
+                             es llamar, asi que eso es lo que ofrece. */
+                          <a className="btn claro chico" href={`tel:${lead.phone}`} title="Llamar">
+                            <Icono n="tel" /> Llamar
+                          </a>
+                        ) : null}
                         <button
                           className="btn plano"
                           onClick={() => setExpandedEmail(isOpen ? null : lead.id)}
@@ -548,7 +673,7 @@ export default function Home() {
 
                   {isOpen && (
                     <tr className="detalle">
-                      <td colSpan={6}>
+                      <td colSpan={7}>
                         {lead.problems.length > 0 && (
                           <div className="etiquetas" style={{ marginBottom: 12 }}>
                             {lead.problems.map((p, i) => (
@@ -570,7 +695,7 @@ export default function Home() {
                           {envio && (
                             <a
                               className="btn plano"
-                              href={`mailto:${lead.email}?subject=${encodeURIComponent(envio.subject)}&body=${encodeURIComponent(envio.body)}`}
+                              href={`mailto:${correo}?subject=${encodeURIComponent(envio.subject)}&body=${encodeURIComponent(envio.body)}`}
                               title="Abrirlo en tu programa de correo en vez de mandarlo desde aquí"
                             >
                               <Icono n="sobre" /> Abrir en mi correo
