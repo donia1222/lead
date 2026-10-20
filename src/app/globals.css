@@ -222,6 +222,17 @@ textarea{resize:vertical}
   padding:7px 11px;background:#f5f6f8;border-bottom:1px solid var(--linea)}
 .borrador pre{margin:0;padding:14px 16px;font-family:inherit;font-size:13.5px;
   line-height:1.6;color:var(--tinta2);white-space:pre-wrap}
+/* El borrador se puede tocar antes de mandarlo: es un cuadro de texto, pero
+   no tiene que parecerlo — ni borde ni fondo distinto, solo el cursor. */
+.borrador-texto{display:block;width:100%;margin:0;padding:14px 16px;border:0;
+  border-radius:0;background:var(--papel);color:var(--tinta2);
+  font-family:inherit;font-size:13.5px;line-height:1.6;resize:vertical}
+.borrador-texto:focus{outline:2px solid #ccd6e0;outline-offset:-2px}
+
+/* Un boton plano dentro de la tabla no es blanco: lo seria por la regla de
+   arriba, y sobre fondo claro no se lee. Paso con «Abrir en mi correo». */
+.lista a.btn.plano{color:var(--tinta2);background:none}
+.lista a.btn.plano:hover{background:#eceef1;color:var(--tinta)}
 .idiomas{display:flex;gap:1px;background:var(--papel);border:1px solid var(--linea);
   border-radius:8px;padding:2px}
 .idiomas button{padding:3px 8px;border-radius:6px;font-size:11.5px;font-weight:700;

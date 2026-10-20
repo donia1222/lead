@@ -96,6 +96,10 @@ export default function Home() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [enviando, setEnviando] = useState<string | null>(null);
+  // Lo que Andrea esta escribiendo ahora mismo en un borrador, antes de que
+  // se guarde. Solo hay uno abierto a la vez, asi que basta con un id.
+  const [edicion, setEdicion] = useState<{ id: string; texto: string } | null>(null);
+  const [guardado, setGuardado] = useState<string | null>(null);
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
   const [enBloque, setEnBloque] = useState(false);
   const [toast, setToast] = useState<{ text: string; kind: "ok" | "error" } | null>(null);
@@ -364,6 +368,27 @@ export default function Home() {
       setToast({ text: "No se ha podido hacer", kind: "error" });
     }
     setEnBloque(false);
+  }
+
+  /**
+   * Guardar el borrador tal y como ha quedado despues de tocarlo. Se llama al
+   * salir del cuadro de texto: no hace falta boton de guardar, y asi lo que se
+   * manda es siempre lo que se ve.
+   */
+  async function guardarBorrador(lead: Lead, texto: string) {
+    if (texto === (lead.emailDraft || "")) return;
+    try {
+      await fetch("/api/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: lead.id, emailDraft: texto }),
+      });
+      setGuardado(lead.id);
+      setTimeout(() => setGuardado((g) => (g === lead.id ? null : g)), 2000);
+      await loadLeads();
+    } catch {
+      setToast({ text: "No se ha podido guardar el texto", kind: "error" });
+    }
   }
 
   async function copyDraft(id: string, text: string) {
@@ -654,7 +679,7 @@ export default function Home() {
                         {envio ? (
                           <button
                             className="btn chico"
-                            onClick={() => enviarEmail(lead, draft)}
+                            onClick={() => enviarEmail(lead, edicion && edicion.id === lead.id ? edicion.texto : draft)}
                             disabled={enviando === lead.id}
                             title="Mandar el email desde tu buzón"
                           >
@@ -790,6 +815,11 @@ export default function Home() {
                                 ))}
                               </div>
                               <span style={{ flex: 1 }} />
+                              {guardado === lead.id ? (
+                                <span className="eti ok"><Icono n="visto" /> guardado</span>
+                              ) : (
+                                <span style={{ fontSize: 12, color: "var(--suave)" }}>Puedes cambiarlo antes de enviar</span>
+                              )}
                               <button className="btn plano" onClick={() => copyDraft(lead.id, draft)} disabled={busy || !draft}>
                                 <Icono n={copied === lead.id ? "visto" : "copiar"} />
                                 {copied === lead.id ? "Copiado" : "Copiar"}
@@ -800,7 +830,18 @@ export default function Home() {
                                 <Rueda /> {translating === lead.id ? "Traduciendo…" : "Escribiendo el email con la IA…"}
                               </p>
                             ) : (
-                              <pre>{draft}</pre>
+                              /* Editable: Andrea cambia lo que quiera antes de
+                                 mandarlo. Se guarda al salir del cuadro, y lo
+                                 que se envia es exactamente esto. */
+                              <textarea
+                                className="borrador-texto"
+                                value={edicion && edicion.id === lead.id ? edicion.texto : draft}
+                                onChange={(e) => setEdicion({ id: lead.id, texto: e.target.value })}
+                                onBlur={(e) => { guardarBorrador(lead, e.target.value); setEdicion(null); }}
+                                rows={Math.max(8, (edicion && edicion.id === lead.id ? edicion.texto : draft).split("\n").length + 1)}
+                                spellCheck
+                                aria-label="Texto del email"
+                              />
                             )}
                           </div>
                         )}
